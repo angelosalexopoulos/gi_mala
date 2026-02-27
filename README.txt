@@ -14,7 +14,7 @@ The typical workflow is:
 Example call list that executed within the file demos_binaryclassifcation.m file
 
 Repeats = 10;
-parfor \cf0 (r=1:Repeats,10)
+parfor(r=1:Repeats,10)
  %for r=1:Repeats
    demBinaryClassification_Marg_fixedhypers(r);
    demBinaryClassification_Marg_fixedhypers_gimala(r);
