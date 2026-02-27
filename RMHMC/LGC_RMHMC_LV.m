@@ -33,8 +33,8 @@ m     = 1/(N^2);
 [D] = length(y);
 
 % HMC Setup
-NumOfIterations    = 6000;
-BurnIn             = 1000;
+NumOfIterations    = 10000;
+BurnIn             = 5000;
 NumOfLeapFrogSteps = 30;
 StepSize           = 0.1;
 

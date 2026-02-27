@@ -58,7 +58,7 @@ model.constraints.likHyper = 'fixed';
 model.FF = X(:); 
 
 mcmcoptions.T = 5000;
-mcmcoptions.Burnin = 2000;
+mcmcoptions.Burnin = 5000;
 mcmcoptions.StoreEvery = 1;
 mcmcoptions.Langevin = 0;
 

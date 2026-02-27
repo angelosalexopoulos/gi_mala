@@ -65,7 +65,7 @@ model.Lambda = diag(model.Lambda);
 model.L = diag(model.Lambda.^0.5)*(model.U');
 
 mcmcoptions.T = 5000;
-mcmcoptions.Burnin = 2000;
+mcmcoptions.Burnin = 5000;
 mcmcoptions.StoreEvery = 1;
 
 tic;

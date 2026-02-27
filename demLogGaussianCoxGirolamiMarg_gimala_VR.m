@@ -64,7 +64,7 @@ model.FF = X(:);
 model.delta = 0.1/sqrt(size(X,1));
 
 mcmcoptions.T = 5000;
-mcmcoptions.Burnin = 2000;
+mcmcoptions.Burnin = 5000;
 mcmcoptions.StoreEvery = 1;
 mcmcoptions.Langevin = 1;
 mcmcoptions.opt =0.82;
