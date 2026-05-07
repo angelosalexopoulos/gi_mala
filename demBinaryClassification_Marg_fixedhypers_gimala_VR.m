@@ -1,4 +1,7 @@
-function demBinaryClassification_Marg_fixedhypers_gimala_VR(rep)
+function demBinaryClassification_Marg_fixedhypers_gimala_VR(rep, T)
+% Optional second argument T sets mcmcoptions.T (number of post-burnin samples).
+% Defaults to 1000 when called without T.
+if nargin < 2, T = 1000; end
 
 
 
@@ -112,7 +115,7 @@ means_cv = zeros(1, n);
    model.constraints.kernHyper = 'free';
    model.constraints.likHyper = 'free';
    model.delta =2/sqrt(size(X,1));
-   mcmcoptions.T = 1000;
+   mcmcoptions.T = T;
    mcmcoptions.Burnin = 5000;
    mcmcoptions.StoreEvery = 1;
    mcmcoptions.Langevin = 1;

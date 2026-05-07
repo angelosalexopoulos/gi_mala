@@ -1,4 +1,7 @@
-function demLogGaussianCoxGirolamiMarg_gimala_VR(rep)
+function demLogGaussianCoxGirolamiMarg_gimala_VR(rep, T)
+% Optional second argument T sets mcmcoptions.T (number of post-burnin samples).
+% Defaults to 5000 when called without T.
+if nargin < 2, T = 5000; end
 
 addpath aGrad/code/toolbox/; 
 addpath aGrad/data/;
@@ -63,7 +66,7 @@ model.constraints.likHyper = 'fixed';
 model.FF = X(:);
 model.delta = 0.1/sqrt(size(X,1));
 
-mcmcoptions.T = 5000;
+mcmcoptions.T = T;
 mcmcoptions.Burnin = 5000;
 mcmcoptions.StoreEvery = 1;
 mcmcoptions.Langevin = 1;

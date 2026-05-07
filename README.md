@@ -31,6 +31,7 @@ This repository contains the code to reproduce all computational results in:
 .
 ├── README.md                    ← this file
 ├── run_all_experiments.m        ← master wrapper (runs everything in order)
+├── run_VR_experiments.m         ← VR wrapper (100 reps × multiple T values for Tables 7, 8, 12)
 │
 ├── demos_binaryclassification.m ← Step 1a: run binary classification simulations
 ├── demos_logGaussianCox.m       ← Step 1b: run Log-Gaussian Cox process simulations
@@ -63,6 +64,8 @@ This repository contains the code to reproduce all computational results in:
 │       ├── make_results_binaryclassification_fixedhypers.m ← Step 2a: generate figures/tables
 │       ├── make_results_girolami.m                         ← Step 2b: generate figures/tables
 │       ├── make_results_girolami_mMALA_RHMC.m              ← Step 2c: generate RHMC comparison
+│       ├── make_results_VR_binaryclassification.m          ← Step 2d: Tables 7, 12 (VR factors)
+│       ├── make_results_VR_girolami.m                      ← Step 2d: Table 8 (VR factors)
 │       ├── toolbox/                    ← shared utility functions (kernels, likelihood, ESS, etc.)
 │       └── data/                       ← benchmark datasets
 │
@@ -124,6 +127,24 @@ demos_logGaussianCox   % runs all Cox process methods including GI-MALA, pMALA, 
 ```
 
 Results are saved in `results/Cox_regression/` as `.mat` files.
+
+---
+
+#### Step 1e — Variance Reduction Experiments for Tables 7, 8, 12 (Section 5.2)
+
+From the repository root in MATLAB:
+
+```matlab
+run_VR_experiments
+```
+
+This script runs `demBinaryClassification_Marg_fixedhypers_gimala_VR` for 100 repeats × 4 chain lengths (T ∈ {1,000; 10,000; 50,000; 200,000}) and `demLogGaussianCoxGirolamiMarg_gimala_VR` for 100 repeats × 2 chain lengths (T ∈ {1,000; 10,000}).
+
+> **Runtime warning**: the full run is computationally intensive (100 reps × T=200,000 for 5 datasets). For a quick smoke-test, set `Repeats = 20` and `T_list_binary = [1000]` at the top of `run_VR_experiments.m` before running.
+
+Results are saved as `<Dataset>_repeat<r>_Marg_fixedhypers_VR_<T>.mat` in the appropriate `results/` subdirectory.
+
+> **Note on Table 6** (Bayesian logistic regression VR, Section 5.2): a VR demo for the fixed-coefficient logistic regression setting does not currently exist in this repository. Table 6 cannot be reproduced from the present code.
 
 ---
 
@@ -194,6 +215,25 @@ Writes to `aGrad/diagrams/`:
 | `GaussianCox_*_meanfield.{eps,pdf}` | posterior mean of the intensity field (Section 5.1.3) |
 | `GaussianCox_*_varfield.{eps,pdf}` | posterior variance of the intensity field (Section 5.1.3) |
 | `GaussianCox_*_expfield.{eps,pdf}` | posterior mean of exp(F) — inferred intensity (Section 5.1.3) |
+
+---
+
+#### Step 2d — Variance Reduction Tables (Section 5.2 / **Tables 7, 8, 12**)
+
+After `run_VR_experiments` has completed (Step 1e), from `aGrad/code`:
+
+```matlab
+make_results_VR_binaryclassification
+make_results_VR_girolami
+```
+
+Writes to `aGrad/diagrams/`:
+
+| Output file | Corresponds to |
+|---|---|
+| `VR_GP_classification_table7.txt` | **Table 7** (Section 5.2): VR factors, GP binary classification (Heart d=270, Australian d=690) |
+| `VR_GP_classification_table12.txt` | **Table 12** (Appendix A.1): VR factors, remaining GP classification datasets (German d=1000, Pima d=532, Ripley d=250) |
+| `VR_GaussianCox_table8.txt` | **Table 8** (Section 5.2): VR factors, log-Gaussian Cox process (d=4096) |
 
 ---
 
