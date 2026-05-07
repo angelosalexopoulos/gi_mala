@@ -1,23 +1,46 @@
-function [model samples accRates] = gpsampAuxMarg_fixedhypers_gimala(model, mcmcoptions)
-
-
-% Inputs:
-%         -- model: the structure that contains the log likelihood and the latent
-%                    Gaussian prior parameters such as the covariance matrix
-%                    with its pre-computed eigendecomposition (see demos)
-%         -- mcmcoptions: user defined options about the burn-in and sampling iterations
-%                      and others (see demos)
+function [model, samples, accRates] = gpsampAuxMarg_fixedhypers_gimala(model, mcmcoptions)
+% gpsampAuxMarg_fixedhypers_gimala  --  GI-MALA sampler (fixed kernel hyperparameters)
 %
-% Outputs: model:
-%         -- model: as above. The outputed model is updated to contain the
-%                   state vector of the final MCMC iteration
-%                   as well as the learned step size delta
-%         -- samples: the structure that contrains the samples
-%         -- accRates: acceptance rate
+% Implements the Gaussian-Invariant MALA (GI-MALA) algorithm from Section 3
+% of the paper, operating on the marginalised (whitened) GP latent space.
+% The step-size delta is adapted during burn-in via a stochastic approximation
+% scheme targeting the acceptance rate specified in mcmcoptions.opt.
 %
+% INPUTS
+%   model         struct with fields:
+%     .y            (n x 1) observations
+%     .X            (n x D) input locations
+%     .F            (1 x n) initial latent GP values
+%     .K            (n x n) prior covariance matrix (precomputed)
+%     .U, .Lambda   eigendecomposition of K: K = U * diag(Lambda) * U'
+%     .delta        initial step size (scalar); will be adapted during burn-in
+%     .GP           kernel hyperparameter struct (fixed, not updated)
+%     .Likelihood   likelihood struct with field .type (e.g. 'Sigmoid', 'LogGaussianCox')
+%     .constraints  struct; .kernHyper and .likHyper should be 'fixed'
+%   mcmcoptions   struct with fields:
+%     .T            number of post-burn-in iterations to store
+%     .Burnin       number of burn-in iterations
+%     .StoreEvery   store every k-th sample (thinning; set to 1 for no thinning)
+%     .Langevin     flag (1 = use gradient; retained for interface compatibility)
+%     .opt          target acceptance rate for step-size adaptation (e.g. 0.75)
+%
+% OUTPUTS
+%   model         updated model struct (.F and .delta reflect final MCMC state)
+%   samples       struct with fields:
+%     .F            (T x n) stored latent samples (post burn-in)
+%     .LogL         (T x 1) log-likelihood at each stored sample
+%     .accprob      (T x 1) Metropolis acceptance probability at each step
+%     .deltax       (T x 1) diagonal preconditioner value at each stored step
+%   accRates      struct with field .F: mean acceptance rate (post burn-in)
+%
+% PAPER CONNECTION
+%   The proposal distribution is defined in eq. (X) of the paper.
+%   The MH correction factor (corrFactor) corresponds to eq. (X).
+%   Step-size adaptation follows the scheme in Section X.X.
 
 
 
+% ---- Initialise dimensions and storage arrays ----
 BurnInIters = mcmcoptions.Burnin;
 Iters = mcmcoptions.T;
 StoreEvery = mcmcoptions.StoreEvery;
@@ -39,33 +62,36 @@ F = model.F;
 samples.accprob = zeros(num_stored,1);
 samples.ff = zeros(1, BurnInIters + Iters);
 
-% compute the initial values of the likelihood p(Y | F)
+% ---- Evaluate initial log-likelihood and gradient ----
 loglikHandle = str2func(['logL' model.Likelihood.type]);
 oldLogLik = loglikHandle(model.Likelihood, Y, F);
 oldLogLik = sum(oldLogLik(:));
 
-
 LambdaInv = 1./model.Lambda;
 
-
-
-% Quantities that need to be updated when the state vector
-% changes
+% Gradient and diagonal curvature of the log-likelihood at current F.
+% der2F is the diagonal of the Hessian; delta_x = mean(-d^2 log p / dF^2)
+% serves as a scalar preconditioner (see Section 3 of the paper).
 gradloglikHandle = str2func(['grad', 'logL' model.Likelihood.type]);
-[derF,der2F] = gradloglikHandle(model.Likelihood, model.y, F);
+[derF, der2F] = gradloglikHandle(model.Likelihood, model.y, F);
 
-
-delta_x = mean(-(der2F));
-
-
+% ---- Precompute GI-MALA proposal parameters ----
+% delta_x: scalar preconditioner from mean negative curvature
+delta_x     = mean(-(der2F));
 delta_x_inv = 1/delta_x;
+
+% Spectral quantities for the GI-MALA proposal mean and covariance
 delta_xLambdaH = 1./(model.Lambda + delta_x_inv);
 gx = (F + delta_x_inv*derF')*model.U;
 
-partOfMeanSampA = gx'.*delta_xLambdaH.*model.Lambda*model.delta;
-partOfMeanSampB = sqrt( (2*model.delta-model.delta*model.delta)/delta_x )*sqrt(model.Lambda.*delta_xLambdaH);%
+% Mean shift for the proposal (scaled eigenbasis representation)
+partOfMeanSampA  = gx'.*delta_xLambdaH.*model.Lambda*model.delta;
+% Standard deviation for proposal noise (eigenspace)
+partOfMeanSampB  = sqrt( (2*model.delta-model.delta*model.delta)/delta_x )*sqrt(model.Lambda.*delta_xLambdaH);
+% Control-variate term (used in VR variant)
 partOfMeanSampCV = partOfMeanSampA'*model.U'/model.delta;
 
+% Log-determinant and quadratic form entering the MH log-ratio
 partOfMeanMH = -0.5*sum(log(model.Lambda*delta_x+1.0));
 partOfMeanMH = partOfMeanMH-0.5*(model.delta/(2-model.delta))*(gx*(delta_xLambdaH.*gx'));
 
@@ -81,18 +107,19 @@ epsilon = 0.05;
 
 acceptHistF = zeros(1, BurnInIters + Iters);
 
+% ---- Main MCMC loop (burn-in + sampling) ----
 for it = 1:(BurnInIters + Iters)
-    %
-    % Propose new state vector F
-    Fnew =(1-model.delta)*F + (randn(1, n).*partOfMeanSampB' +  partOfMeanSampA' )*model.U';
 
-    % perform an evaluation of the likelihood p(Y | F)
+    % --- Propose new state vector F (GI-MALA proposal, eq. X) ---
+    Fnew = (1-model.delta)*F + (randn(1, n).*partOfMeanSampB' + partOfMeanSampA')*model.U';
+
+    % Evaluate likelihood at the proposed state
     newLogLik = loglikHandle(model.Likelihood, Y, Fnew(:));
     newLogLik = sum(newLogLik(:));
 
-    % Metropolis-Hastings to accept-reject the proposal
-    % new gradient
-    [derFnew,der2Fnew] = gradloglikHandle(model.Likelihood, model.y, Fnew);
+    % --- Compute MH acceptance ratio ---
+    % Gradient and curvature at the proposed state (needed for reverse proposal)
+    [derFnew, der2Fnew] = gradloglikHandle(model.Likelihood, model.y, Fnew);
     %der2Fnew = grad2loglikHandle(model.Likelihood, model.y, Fnew);
 
     delta_y = mean(-(der2Fnew));
@@ -112,13 +139,15 @@ for it = 1:(BurnInIters + Iters)
     partOfMeanMHnew = partOfMeanMHnew-0.5*(model.delta/(2-model.delta))*(gy*(delta_yLambdaH.*gy'));
 
 
+    % Log proposal density q(Fnew | F) and q(F | Fnew) (quadratic terms)
     hxy = 0.5*(delta_x/(2*model.delta-model.delta^2))*sum( (Fnew-F -(model.delta/delta_x)*derF').^2 );
-    hxy = hxy +partOfMeanMH;
+    hxy = hxy + partOfMeanMH;
     hyx = 0.5*(delta_y/(2*model.delta-model.delta^2))*sum( (F-Fnew -(model.delta/delta_y)*derFnew').^2 );
-    hyx = hyx +partOfMeanMHnew;
+    hyx = hyx + partOfMeanMHnew;
+    % corrFactor = log q(F|Fnew) - log q(Fnew|F); added to log-likelihood ratio in MH step
     corrFactor = hxy - hyx;
 
-    [accept, uprob] = metropolisHastings(newLogLik+corrFactor, oldLogLik, 0, 0);
+    [accept, uprob] = metropolisHastings(newLogLik + corrFactor, oldLogLik, 0, 0);
 
     acceptHistF(it) = accept;
 
@@ -135,15 +164,16 @@ for it = 1:(BurnInIters + Iters)
     end
 
     %if model.Likelihood.type ~= 'Gaussian'
-    % Adapt proposal during burnin
-    if mod(it,5) == 0
+    % --- Step-size adaptation (burn-in only) ---
+    % Every 5 iterations, check the acceptance rate over the last 50 steps.
+    % If it falls outside [opt-range, opt+range], rescale delta proportionally.
+    % Adaptation is frozen after burn-in to ensure valid MCMC ergodicity.
+    if mod(it, 5) == 0
         if (it >= 50)
             accRateF = mean(acceptHistF((it-49):it))*100;
             if (it <= BurnInIters)
                 if (accRateF > (100*(opt+range))) || (accRateF < (100*(opt-range)))
-                    %
                     model.delta = model.delta + (epsilon*((accRateF/100 - opt)/opt))*model.delta;
-                    %
                 end
             end
         end

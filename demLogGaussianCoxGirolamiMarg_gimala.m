@@ -1,6 +1,21 @@
 function demLogGaussianCoxGirolamiMarg_gimala(rep)
+% demLogGaussianCoxGirolamiMarg_gimala  --  GI-MALA on Log-Gaussian Cox process
+%
+% Runs the GI-MALA sampler on the 64x64 spatial intensity field from
+% Girolami & Calderhead (2011) with fixed kernel hyperparameters.
+% Called by demos_logGaussianCox.m and run_all_experiments.m.
+%
+% INPUT
+%   rep  integer repeat index (1..Repeats).
+%
+% OUTPUT (saved to results/Cox_regression/)
+%   logGaussianCoxGirolami_Marg_gimala_repeat<rep>.mat
+%     elapsedTime, accRates, eff_LogL, ess, LogL  (see binary classif. demo for details)
+%
+% PAPER CONNECTION
+%   Results feed into Table X and Figures X-X (Section 5.X, Log-Gaussian Cox process).
 
-addpath aGrad/code/toolbox/; 
+addpath aGrad/code/toolbox/;
 addpath aGrad/data/;
 
 dataName = 'logGaussianCoxGirolami_Marg';
