@@ -2,13 +2,13 @@ rm(list=ls())
 
 # ============================================================
 # tmcmc.R -- Variance-reduction experiment for tail probability estimation
-#            (Section 5.2.1 of the paper / Table 1)
+#            (Section 5.2.1 of the paper / Figure 1)
 #
 # PURPOSE
 #   Compares the variance of a plain GI-MALA tail-probability estimator
 #   E[1(X > c)] with a variance-reduced version using two control variates
-#   (H1, H2 defined in Section 4 of the paper).  The output is the ratio
-#   Var(plain) / Var(VR), printed as a LaTeX table.
+#   (H1, H2 defined in Section 4 of the paper).  Computes the ratio
+#   Var(plain) / Var(VR) across combinations of nu and b.
 #
 # TARGET DISTRIBUTION
 #   Univariate Student-t with nu degrees of freedom.
@@ -18,8 +18,9 @@ rm(list=ls())
 #   c_list      threshold values c for P(X > c)          (default: 0,1,2,3)
 #
 # OUTPUT
-#   LaTeX table printed to stdout; rows = nu values, cols = c values.
-#   This table corresponds to Table 1 in the paper.
+#   Variance-reduction ratios (rows = nu, cols = c).
+#   These results correspond to Figure 1 in the paper (N=2 and N=5 panels).
+#   A related table appears in the supplementary material.
 #
 # RUNTIME: approx. 5-10 minutes (100 repetitions x 10000 samples per cell).
 #

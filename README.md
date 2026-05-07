@@ -47,7 +47,7 @@ This repository contains the code to reproduce all computational results in:
 ├── gpsampAuxMarg_fixedhypers_pMALA.m       ← preconditioned MALA sampler implementation
 ├── ergMean.m                               ← ergodic mean utility
 │
-├── tmcmc.R       ← Step 1c: variance reduction for tail probability (Section 5.2.1 / Table 1)
+├── tmcmc.R       ← Step 1c: variance reduction for tail probability (Section 5.2.1 / Figure 1)
 ├── tmcmc_ess.R   ← Step 1d: ESS comparison on univariate Student-t (Appendix A.3 / Tables A1–A3, Figures A1–A2)
 │
 ├── RMHMC/
@@ -127,7 +127,7 @@ Results are saved in `results/Cox_regression/` as `.mat` files.
 
 ---
 
-#### Step 1c — Variance Reduction for Tail Probability Estimation (Section 5.2.1 / **Table 1**)
+#### Step 1c — Variance Reduction for Tail Probability Estimation (Section 5.2.1 / **Figure 1**)
 
 Open R (version ≥ 4.0) and run:
 
@@ -135,7 +135,7 @@ Open R (version ≥ 4.0) and run:
 source("tmcmc.R")
 ```
 
-This script runs GI-MALA on a univariate Student-t target for combinations of degrees-of-freedom `nu` and threshold values `c`, and prints a LaTeX table of variance-reduction ratios. The output corresponds to **Table 1** in the paper.
+This script runs GI-MALA on a univariate Student-t target for combinations of degrees-of-freedom `nu` and threshold values `c`, and computes variance-reduction ratios. The output corresponds to **Figure 1** in the paper (variance ratio plots for N=2 and N=5). A related table appears in the supplementary material.
 
 ---
 
