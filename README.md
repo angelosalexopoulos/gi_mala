@@ -51,6 +51,10 @@ This repository contains the code to reproduce all computational results in:
 ├── tmcmc.R       ← Step 1c: variance reduction for tail probability (Section 5.2.1 / Figure 1; Appendix A.2 / Table 13)
 ├── tmcmc_ess.R   ← Step 1d: ESS comparison on univariate Student-t (Appendix A.2 / Table 14, Figure 3)
 │
+├── make_table2_logistic.R ← Step 1f: ESS comparison, Bayesian logistic regression (Table 2, Section 5.1.1)
+├── make_table6_logistic.R ← Step 1f: VR factors, Bayesian logistic regression (Table 6, Section 5.2)
+├── LogisticToy.R          ← exploratory logistic regression script (basis for the above)
+│
 ├── RMHMC/
 │   ├── demLogGaussianCoxGirolamiRHMC.m  ← RMHMC baseline demo (Cox process)
 │   └── LGC_RMHMC_LV.m                  ← RMHMC sampler for Log-Gaussian Cox
@@ -145,6 +149,26 @@ This script runs `demBinaryClassification_Marg_fixedhypers_gimala_VR` for 100 re
 Results are saved as `<Dataset>_repeat<r>_Marg_fixedhypers_VR_<T>.mat` in the appropriate `results/` subdirectory.
 
 > **Note on Table 6** (Bayesian logistic regression VR, Section 5.2): a VR demo for the fixed-coefficient logistic regression setting does not currently exist in this repository. Table 6 cannot be reproduced from the present code.
+
+---
+
+#### Step 1f — Bayesian Logistic Regression (Section 5.1.1 / **Table 2** and Section 5.2 / **Table 6**)
+
+Open R (version ≥ 4.0) and run:
+
+```r
+source("make_table2_logistic.R")   # ESS comparison (Table 2, Section 5.1.1)
+source("make_table6_logistic.R")   # Variance reduction factors (Table 6, Section 5.2)
+```
+
+Both scripts read data from the path set in `data_dir` at the top of each file (default: `/Users/angelos/Desktop/vr_pCN/data`). Edit this path if your data lives elsewhere. Required packages: `MASS`, `coda`.
+
+| Script | Output file | Corresponds to |
+|---|---|---|
+| `make_table2_logistic.R` | `table2_logistic.tex` | **Table 2** (Section 5.1.1): ESS for GI-MALA vs. pMALA, Heart/Australian/German (10 repeats) |
+| `make_table6_logistic.R` | `table6_logistic.tex` | **Table 6** (Section 5.2): VR factors, Heart/Australian, n ∈ {1k, 10k, 50k, 200k} (100 repeats) |
+
+> **Runtime warning for `make_table6_logistic.R`**: 100 reps × T=200,000 is expensive. For a quick check, set `Repeats <- 20` and `T_list <- c(1000)` at the top of the script.
 
 ---
 
