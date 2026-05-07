@@ -1,8 +1,26 @@
 function demBinaryClassification_Marg_fixedhypers_gimala(rep)
+% demBinaryClassification_Marg_fixedhypers_gimala  --  GI-MALA on GP binary classification
+%
+% Runs the GI-MALA sampler (gpsampAuxMarg_fixedhypers_gimala) on five binary
+% classification benchmark datasets with fixed kernel hyperparameters.
+% Called by demos_binaryclassification.m and run_all_experiments.m.
+%
+% INPUT
+%   rep  integer repeat index (1..Repeats); used to seed-independently
+%        name output files so parallel runs do not clash.
+%
+% OUTPUT (saved to results/LogisticRegression_GP/)
+%   <Dataset>_repeat<rep>_Marg_fixedhypers.mat
+%     elapsedTime  wall-clock seconds for this run
+%     accRates     acceptance rate (post burn-in)
+%     eff_LogL     ESS of the log-likelihood trace
+%     ess          effective sample size per latent dimension
+%     LogL         log-likelihood samples
+%
+% PAPER CONNECTION
+%   Results feed into Table X and Figure X (Section 5.X, binary classification).
 
-
-
-addpath aGrad/code/toolbox/; 
+addpath aGrad/code/toolbox/;
 addpath aGrad/data/;
 
 
