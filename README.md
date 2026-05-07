@@ -47,8 +47,8 @@ This repository contains the code to reproduce all computational results in:
 ├── gpsampAuxMarg_fixedhypers_pMALA.m       ← preconditioned MALA sampler implementation
 ├── ergMean.m                               ← ergodic mean utility
 │
-├── tmcmc.R       ← Step 1c: variance reduction for tail probability (Section 5.2.1 / Figure 1)
-├── tmcmc_ess.R   ← Step 1d: ESS comparison on univariate Student-t (Appendix A.3 / Tables A1–A3, Figures A1–A2)
+├── tmcmc.R       ← Step 1c: variance reduction for tail probability (Section 5.2.1 / Figure 1; Appendix A.2 / Table 13)
+├── tmcmc_ess.R   ← Step 1d: ESS comparison on univariate Student-t (Appendix A.2 / Table 14, Figure 3)
 │
 ├── RMHMC/
 │   ├── demLogGaussianCoxGirolamiRHMC.m  ← RMHMC baseline demo (Cox process)
@@ -90,7 +90,7 @@ Alternatively, run each experiment individually as described below.
 
 ---
 
-#### Step 1a — Binary Classification (Section 5.X)
+#### Step 1a — Binary Classification (Sections 5.1.1 and 5.1.2)
 
 From the repository root in MATLAB:
 
@@ -112,7 +112,7 @@ Results are saved in `results/LogisticRegression_GP/` as `.mat` files, one per m
 
 ---
 
-#### Step 1b — Log-Gaussian Cox Process (Section 5.X)
+#### Step 1b — Log-Gaussian Cox Process (Section 5.1.3)
 
 ```matlab
 addpath aGrad/code
@@ -135,25 +135,22 @@ Open R (version ≥ 4.0) and run:
 source("tmcmc.R")
 ```
 
-This script runs GI-MALA on a univariate Student-t target for combinations of degrees-of-freedom `nu` and threshold values `c`, and computes variance-reduction ratios. The output corresponds to **Figure 1** in the paper (variance ratio plots for N=2 and N=5). A related table appears in the supplementary material.
+This script runs GI-MALA on a univariate Student-t target for combinations of degrees-of-freedom `nu` and threshold values `c`, and computes variance-reduction ratios. The output corresponds to **Figure 1** (Section 5.2.1) and **Table 13** (Appendix A.2, tabular version of Figure 1 for all b values).
 
 ---
 
-#### Step 1d — ESS Comparison on Univariate Student-t (Appendix A.3 / **Tables A1–A3**, **Figures A1–A2**)
+#### Step 1d — ESS Comparison on Univariate Student-t (Appendix A.2 / **Table 14**, **Figure 3**)
 
 ```r
 source("tmcmc_ess.R")
 ```
 
-This script compares GI-MALA, MALA, and RWM on a univariate Student-t for varying target acceptance rates and degrees of freedom. Outputs are written to the folder specified by `base_out_dir` (edit this path at the top of the script before running):
+This script compares GI-MALA, MALA, and RWM on a univariate Student-t for varying degrees of freedom. Outputs are written to the folder specified by `base_out_dir` (edit this path at the top of the script before running):
 
 | Output file | Corresponds to |
 |---|---|
-| `table_ess_t_selftuned.tex` | Table A1 (ESS, ESS/s, acceptance rate, step size) |
-| `traceplots_*.pdf` | Figures A1 (log-likelihood trace plots) |
-| `density_vs_true_*.pdf` | Figures A2 (estimated vs. true density) |
-| `table_density_metrics.tex` | Table A2 (ISE and L1 density errors) |
-| `table_tail_metrics.tex` | Table A3 (tail probability accuracy) |
+| `table_ess_t_selftuned.tex` | **Table 14** (Appendix A.2): ESS, acceptance rate, step size γ for GI-MALA, MALA, RWM |
+| `density_vs_true_*.pdf` | **Figure 3** (Appendix A.2): estimated stationary densities vs. true Student-t |
 
 ---
 
@@ -161,7 +158,7 @@ This script compares GI-MALA, MALA, and RWM on a univariate Student-t for varyin
 
 After all MCMC runs have completed (Step 1a–1b), generate the paper figures and tables from MATLAB:
 
-#### Step 2a — Binary Classification Figures and Tables (**Figures X–X**, **Table X**)
+#### Step 2a — Binary Classification Figures and Tables
 
 ```matlab
 cd aGrad/code
@@ -172,12 +169,16 @@ This script reads the `.mat` files from `results/LogisticRegression_GP/` and wri
 
 | Output file pattern | Corresponds to |
 |---|---|
-| `<Dataset>_table_fixedhypers.txt` | Table X: ESS (min/med/max), ESS/s, timing per dataset |
-| `<Dataset>_*_logL_fixedhypers.{eps,pdf}` | Figure X: log-likelihood trace plots (one per method per dataset) |
+| `Heart_table_fixedhypers.txt` | **Table 3** (Section 5.1.2): ESS comparison, Heart dataset (d=270) |
+| `Australian_table_fixedhypers.txt` | **Table 4** (Section 5.1.2): ESS comparison, Australian dataset (d=690) |
+| `German_table_fixedhypers.txt` | **Table 9** (Appendix A.1): ESS comparison, German dataset (d=1000) |
+| `Pima_table_fixedhypers.txt` | **Table 10** (Appendix A.1): ESS comparison, Pima dataset (d=532) |
+| `Ripley_table_fixedhypers.txt` | **Table 11** (Appendix A.1): ESS comparison, Ripley dataset (d=250) |
+| `<Dataset>_*_logL_fixedhypers.{eps,pdf}` | **Figures 4, 5** (Appendix A.3): log-likelihood trace plots (Heart, Australian) |
 
 ---
 
-#### Step 2b — Log-Gaussian Cox Process Figures and Tables (**Figures X–X**, **Table X**)
+#### Step 2b — Log-Gaussian Cox Process Figures and Tables
 
 ```matlab
 cd aGrad/code
@@ -188,22 +189,22 @@ Writes to `aGrad/diagrams/`:
 
 | Output file pattern | Corresponds to |
 |---|---|
-| `GaussianCox_table*.txt` | Table X: ESS comparison table |
-| `GaussianCox_*_logL*.{eps,pdf}` | Figure X: log-likelihood trace plots |
-| `GaussianCox_*_meanfield.{eps,pdf}` | Figure X: posterior mean of the intensity field |
-| `GaussianCox_*_varfield.{eps,pdf}` | Figure X: posterior variance of the intensity field |
-| `GaussianCox_*_expfield.{eps,pdf}` | Figure X: posterior mean of exp(F) (intensity) |
+| `GaussianCox_table*.txt` | **Table 5** (Section 5.1.3): ESS comparison, Cox process (d=4096) |
+| `GaussianCox_*_logL*.{eps,pdf}` | **Figure 6** (Appendix A.3): log-likelihood trace plots and boxplots |
+| `GaussianCox_*_meanfield.{eps,pdf}` | posterior mean of the intensity field (Section 5.1.3) |
+| `GaussianCox_*_varfield.{eps,pdf}` | posterior variance of the intensity field (Section 5.1.3) |
+| `GaussianCox_*_expfield.{eps,pdf}` | posterior mean of exp(F) — inferred intensity (Section 5.1.3) |
 
 ---
 
-#### Step 2c — RMHMC Comparison (**Figure X**)
+#### Step 2c — RHMC Comparison (included in **Table 5**)
 
 ```matlab
 cd aGrad/code
 make_results_girolami_mMALA_RHMC
 ```
 
-Generates the RMHMC vs. GI-MALA comparison figure saved in `aGrad/diagrams/`.
+Processes the RMHMC results and adds them to the Cox process comparison (Table 5, Section 5.1.3).
 
 ---
 

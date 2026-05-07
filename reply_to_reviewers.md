@@ -20,7 +20,7 @@ We have completely rewritten the `README.md` to provide an explicit, step-by-ste
 
 - **Section "Step-by-Step Instructions"** now lists, for each step, which exact output files are produced and which paper display item (Table/Figure number) each file corresponds to.
 - A summary table is provided for each results-generation script (`make_results_binaryclassification_fixedhypers.m`, `make_results_girolami.m`, `tmcmc.R`, `tmcmc_ess.R`), listing output file patterns alongside their corresponding display items.
-- All figures and tables in the paper that include results are covered, including supplementary material (Appendix A.3: Tables A1–A3, Figures A1–A2).
+- All figures and tables in the paper that include results are covered, including supplementary material (Appendix A.1: Tables 9–12; Appendix A.2: Table 13, Table 14, Figure 3; Appendix A.3: Figures 4–6).
 
 We also note that the code uses **MATLAB** (R2020a or later) and **R** (4.0 or later), not Python; no Python dependencies exist in this submission. We have added explicit version requirements for both languages and for all R packages used.
 
@@ -46,7 +46,7 @@ We have added `run_all_experiments.m`, a master MATLAB wrapper script that runs 
 4. Runs the Log-Gaussian Cox process experiments (Experiment 2).
 5. Prints, upon completion, the exact commands needed to generate all figures and tables from the saved results.
 
-Each section of the wrapper is preceded by a block comment that names the experiment, explains what it computes, identifies the output location, and states which paper display item(s) the outputs correspond to. We also direct users to `tmcmc.R` and `tmcmc_ess.R` for the R-based experiments (Table 1 and Appendix A.3).
+Each section of the wrapper is preceded by a block comment that names the experiment, explains what it computes, identifies the output location, and states which paper display item(s) the outputs correspond to. We also direct users to `tmcmc.R` (Figure 1, Table 13) and `tmcmc_ess.R` (Table 14, Figure 3) for the R-based experiments in Appendix A.2.
 
 ---
 

@@ -19,8 +19,8 @@ rm(list=ls())
 #
 # OUTPUT
 #   Variance-reduction ratios (rows = nu, cols = c).
-#   These results correspond to Figure 1 in the paper (N=2 and N=5 panels).
-#   A related table appears in the supplementary material.
+#   These results correspond to Figure 1 in the paper (N=2 and N=5 panels)
+#   and to Table 13 (Appendix A.2), the tabular version of Figure 1 for all b values.
 #
 # RUNTIME: approx. 5-10 minutes (100 repetitions x 10000 samples per cell).
 #
