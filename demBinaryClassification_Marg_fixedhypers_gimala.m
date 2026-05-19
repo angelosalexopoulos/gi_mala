@@ -130,7 +130,7 @@ means_cv = zeros(1, n);
    model.constraints.kernHyper = 'free';
    model.constraints.likHyper = 'free';
    model.delta =2/sqrt(size(X,1));
-   mcmcoptions.T = 1000;
+   mcmcoptions.T = 5000;
    mcmcoptions.Burnin = 5000;
    mcmcoptions.StoreEvery = 1;
    mcmcoptions.Langevin = 1;
@@ -157,10 +157,11 @@ means_cv = zeros(1, n);
    LogL= summaryMarg.LogL;
    summaryMarg.elapsed = elapsedTime;
    summaryMarg.accRates = accRates;
-   summaryMarg.delta = model.delta; 
+   summaryMarg.delta = model.delta;
    eff_LogL = mcmc_ess(samples.LogL);
-   save(['results/LogisticRegression_GP/' dataName{1} '_repeat' num2str(rep) '_Marg_fixedhypers.mat'], ...
-       'elapsedTime','accRates','eff_LogL','ess','LogL');
+   delta = model.delta;
+   save(['results/LogisticRegression_GP/' dataName{1} '_repeat' num2str(rep) '_Marg_fixedhypers_gimala.mat'], ...
+       'elapsedTime','accRates','eff_LogL','ess','LogL','delta');
 
 end
 end
