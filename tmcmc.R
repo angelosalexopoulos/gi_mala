@@ -209,7 +209,7 @@ p <- ggplot(plot_df, aes(x = nu_lab, y = ratio,
   geom_point(colour = "black", size = 1.8) +
   scale_linetype_manual(values = line_types, name = NULL) +
   scale_x_discrete(name = expression(nu)) +
-  scale_y_continuous(name = "Variance reduction factor") +
+  scale_y_log10(name = "Variance reduction factor (log scale)") +
   facet_wrap(~ N_panel, ncol = 2) +
   theme_bw(base_size = 12) +
   theme(
