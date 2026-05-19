@@ -23,7 +23,7 @@ library(MASS)
 #   Heart (N=270) and Australian (N=690)  [Table 6 rows]
 #
 # OUTPUT
-#   table6_logistic.tex  written to the working directory
+#   Table6.tex  written to the working directory
 #
 # RUNTIME WARNING
 #   Runs 100 repeats x 4 chain lengths x 2 datasets.
@@ -36,7 +36,7 @@ library(MASS)
 # ============================================================
 
 data_dir <- "/Users/angelos/Desktop/vr_pCN/data"   # <-- edit if needed
-out_file <- "table6_logistic.tex"
+out_file <- "Table6.tex"
 
 set.seed(121088)
 
@@ -190,13 +190,15 @@ for (di in seq_along(datasets)) {
   ds <- datasets[[di]]
   cat("Dataset:", ds$name, "\n")
 
-  sep_char <- if (ds$sep == "") " " else ds$sep
-  myX <- as.matrix(read.table(
+  sep_char <- if (ds$sep == "") "\t" else ds$sep
+  raw_X <- read.table(
     file.path(data_dir, paste0("Logistic_", ds$name), "myX.txt"),
-    sep = sep_char))
-  Y   <- as.matrix(read.table(
+    sep = sep_char, header = FALSE)
+  myX <- matrix(as.numeric(unlist(raw_X)), nrow = nrow(raw_X), ncol = ncol(raw_X))
+  raw_Y <- read.table(
     file.path(data_dir, paste0("Logistic_", ds$name), "Y.txt"),
-    sep = sep_char))
+    sep = sep_char, header = FALSE)
+  Y <- as.numeric(unlist(raw_Y))
 
   d <- ncol(myX)
   myX <- myX[, c(d, seq_len(d - 1))]
