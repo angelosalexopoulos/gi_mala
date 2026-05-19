@@ -42,14 +42,14 @@ mynu_list <- c(1,2,5,30,100,1000)
 methods   <- c("GI-MALA","MALA","RWM")
 
 nrep       <- 10
-n_samples  <- 7000
-burnin     <- 3000
+n_samples  <- 20000
+burnin     <- 10000
 
-nu_plot <- c(1,2,5,30,100,1000)
+nu_plot <- c(1, 2, 5, 30)
 
 # GI-MALA target acceptance rates to iterate over
-gi_targets <- c(0.70,0.75,0.80,0.85,0.90,0.95)
-
+#gi_targets <- c(0.70,0.75,0.80,0.85,0.90,0.95)
+gi_targets <- 0.8
 # Base output directory — subfolders per GI target are created here
 base_out_dir <- file.path(script_dir, "tmcmc_ess_output")
 
@@ -380,7 +380,7 @@ for (gi_target in gi_targets) {
     scale_linetype_manual(values = all_line_types, name = NULL) +
     scale_x_continuous(name = "x") +
     scale_y_continuous(name = "Density") +
-    facet_wrap(~ nu_lab, nrow = 2, ncol = 3,
+    facet_wrap(~ nu_lab, nrow = 2, ncol = 2,
                labeller = label_parsed, scales = "free") +
     theme_bw(base_size = 11) +
     theme(
@@ -391,7 +391,7 @@ for (gi_target in gi_targets) {
       panel.grid.minor = element_blank()
     )
 
-  ggsave(pdf_density_out, plot = p3, width = 10, height = 6)
+  ggsave(pdf_density_out, plot = p3, width = 7, height = 6)
   cat("Saved Figure3.pdf:", pdf_density_out, "\n")
 }
 
