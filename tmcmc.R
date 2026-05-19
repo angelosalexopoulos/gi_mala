@@ -1,6 +1,14 @@
 rm(list = ls())
 library(ggplot2)
 
+# Resolve output directory to the script's own folder so that
+# ggsave / file() always write next to tmcmc.R regardless of
+# what R's working directory is when you source() the script.
+script_dir <- tryCatch(
+  dirname(normalizePath(sys.frame(1)$ofile)),   # works when sourced
+  error = function(e) getwd()                    # fallback when run interactively
+)
+
 # ============================================================
 # tmcmc.R -- Variance-reduction experiment for tail probability estimation
 #            (Section 5.2.1 of the paper / Figure 1)
@@ -220,13 +228,14 @@ p <- ggplot(plot_df, aes(x = nu_lab, y = ratio,
     panel.grid.minor  = element_blank()
   )
 
-ggsave("Figure1.pdf", plot = p, width = 8, height = 4)
-cat("Written: Figure1.pdf  (Figure 1, two panels N=2 and N=5)\n")
+fig1_path <- file.path(script_dir, "Figure1.pdf")
+ggsave(fig1_path, plot = p, width = 8, height = 4)
+cat("Written:", fig1_path, " (Figure 1, two panels N=2 and N=5)\n")
 
 # ------------------------------------------------------------------
 # Table 13: tabular version (all c values, both N panels)
 # ------------------------------------------------------------------
-out_file <- "Table13.tex"
+out_file <- file.path(script_dir, "Table13.tex")
 fid <- file(out_file, "w")
 
 writeLines("% Table 13 (Appendix A.2): variance-reduction ratios Var(plain)/Var(VR)", fid)
@@ -252,4 +261,4 @@ for (ni in seq_along(N_list)) {
 }
 
 close(fid)
-cat("Written: Table13.tex  (Table 13, Appendix A.2)\n")
+cat("Written:", out_file, " (Table 13, Appendix A.2)\n")
