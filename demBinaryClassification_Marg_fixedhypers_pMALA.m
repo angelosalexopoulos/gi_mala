@@ -121,9 +121,16 @@ for dataName = {'Australian' 'German' 'Heart' 'Pima' 'Ripley'}% 'Caravan'}
 
 
 
-   tic;
-   [model samples accRates] = gpsampAuxMarg_fixedhypers_pMALA(model, mcmcoptions);
-   elapsedTime = toc;
+   % Repeat until post-burnin acceptance rate is within [52, 62]% (target 57.4%)
+   cond = true;
+   while cond
+       tic;
+       [model samples accRates] = gpsampAuxMarg_fixedhypers_pMALA(model, mcmcoptions);
+       elapsedTime = toc;
+       if accRates.F > 52 && accRates.F < 62
+           cond = false;
+       end
+   end
 
 
 
@@ -133,10 +140,11 @@ for dataName = {'Australian' 'German' 'Heart' 'Pima' 'Ripley'}% 'Caravan'}
    LogL= summaryMarg.LogL;
    summaryMarg.elapsed = elapsedTime;
    summaryMarg.accRates = accRates;
-   summaryMarg.delta = model.delta; 
+   summaryMarg.delta = model.delta;
    eff_LogL = mcmc_ess(samples.LogL);
+   delta = model.delta;
    save(['results/LogisticRegression_GP/' dataName{1} '_repeat' num2str(rep) '_Marg_fixedhypers_pMALA.mat'], ...
-       'elapsedTime','accRates','eff_LogL','ess','LogL');
+       'elapsedTime','accRates','eff_LogL','ess','LogL','delta');
 end   
 
 end

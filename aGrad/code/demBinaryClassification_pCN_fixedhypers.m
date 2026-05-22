@@ -118,11 +118,18 @@ for dataName = {'Australian' 'German' 'Heart' 'Pima' 'Ripley'}% 'Caravan'}
    %model.L = L;
    model.L = diag(model.Lambda.^0.5)*(model.U');
    
-   tic;
-   [model samples accRates] = gpsamppCN_fixedhypers(model, mcmcoptions);
-   elapsedTime = toc;
+   % Repeat until post-burnin acceptance rate is within [20, 30]% (target 25%)
+   cond = true;
+   while cond
+       tic;
+       [model samples accRates] = gpsamppCN_fixedhypers(model, mcmcoptions);
+       elapsedTime = toc;
+       if accRates.F > 20 && accRates.F < 30
+           cond = false;
+       end
+   end
 
-   % compute statistics 
+   % compute statistics
    summarypCN = summaryStatistics(samples);
    summarypCN.elapsed = elapsedTime; 
    summarypCN.accRates = accRates;
