@@ -8,7 +8,7 @@ script_dir <- tryCatch(
   error = function(e) getwd()
 )
 
-set.seed(121088)
+#set.seed(121088)
 
 # ============================================================
 # Multi-target GI-MALA tuning experiment for univariate Student t_nu target
@@ -49,7 +49,7 @@ nu_plot <- c(1, 2, 5, 30)
 
 # GI-MALA target acceptance rates to iterate over
 #gi_targets <- c(0.70,0.75,0.80,0.85,0.90,0.95)
-gi_targets <- 0.8
+gi_targets <- 0.98
 # Base output directory — subfolders per GI target are created here
 base_out_dir <- file.path(script_dir, "tmcmc_ess_output")
 
@@ -223,8 +223,8 @@ for (gi_target in gi_targets) {
   out_dir <- file.path(base_out_dir, target_tag)
   dir.create(out_dir, recursive = TRUE, showWarnings = FALSE)
   
-  tex_out         <- file.path(out_dir, "Table14.tex")
-  pdf_density_out <- file.path(out_dir, "Figure3.pdf")
+  tex_out         <- file.path(script_dir, "Table14.tex")
+  pdf_density_out <- file.path(script_dir, "Figure3.pdf")
   
   label_tag <- gsub("\\.", "p", sprintf("%0.2f", gi_target))  # for LaTeX labels
   
@@ -330,10 +330,15 @@ for (gi_target in gi_targets) {
   # Two rows x three columns panel (one panel per nu value).
   # Black lines with different styles per method.
   # ============================================================
-  all_line_types <- c("True" = "solid",
-                      "GI-MALA" = "dashed",
-                      "MALA"    = "dotted",
-                      "RWM"     = "dotdash")
+  all_line_types <- c("True"    = "solid",
+                      "GI-MALA" = "solid",
+                      "MALA"    = "dashed",
+                      "RWM"     = "dotted")
+
+  all_colours <- c("True"    = "black",
+                   "GI-MALA" = "#E41A1C",
+                   "MALA"    = "#4DAF4A",
+                   "RWM"     = "#377EB8")
 
   fig3_df <- do.call(rbind, lapply(nu_plot, function(nu) {
     ii <- match(nu, mynu_list)
@@ -375,8 +380,9 @@ for (gi_target in gi_targets) {
                            levels = paste0("nu == ", nu_plot))
 
   p3 <- ggplot(fig3_df, aes(x = x, y = y,
-                             group = method, linetype = method)) +
-    geom_line(colour = "black", linewidth = 0.75) +
+                             group = method, colour = method, linetype = method)) +
+    geom_line(linewidth = 0.75) +
+    scale_colour_manual(values = all_colours, name = NULL) +
     scale_linetype_manual(values = all_line_types, name = NULL) +
     scale_x_continuous(name = "x") +
     scale_y_continuous(name = "Density") +
@@ -384,8 +390,12 @@ for (gi_target in gi_targets) {
                labeller = label_parsed, scales = "free") +
     theme_bw(base_size = 11) +
     theme(
-      legend.position  = "bottom",
-      legend.key.width = unit(1.5, "cm"),
+      legend.position  = "inside",
+      legend.position.inside = c(0.98, 0.98),
+      legend.justification = c("right", "top"),
+      legend.background = element_rect(fill = "white", colour = NA),
+      legend.key.width = unit(1.2, "cm"),
+      legend.text      = element_text(size = 8),
       strip.background = element_blank(),
       strip.text       = element_text(size = 11, face = "bold"),
       panel.grid.minor = element_blank()

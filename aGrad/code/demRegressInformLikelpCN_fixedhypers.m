@@ -1,68 +1,53 @@
 function demRegressInformLikelpCN_fixedhypers(rep)
+% demRegressInformLikelpCN_fixedhypers  (pCN)
+%
+% pCN sampler for GP regression with informative likelihood.
+% Data: regressinformlik_d1000.mat, sigma2 = 0.1^2 (config i=2).
+%
+% Output: results/GPregression/regression_repeat<rep>_pCN.mat
+% Run from the repository root.
 
-addpath toolbox/;
+addpath aGrad/code/toolbox/;
+addpath aGrad/data/;
 
-dataName = 'regressionInformLikeToy_pCN';
-storeRes = 1;
-
-for i=1:3
-
-% Fix seeds
-%randn('seed', 1e5);
-%rand('seed', 1e5);
-%sigma2vals = [1^2 0.1^2 0.01^2 0.001^2];
-%step = 0.004; 
-%X = (0:step:4)';
-%sigma2 = sigma2vals(i); % 0.1^2; 
-%Y = sin(2*pi*X) + cos((2.5*pi*X)) + sqrt(sigma2)*randn(size(X,1),1);
-%XX{i} = X;
-%YY{i} = Y;
-%save data/regressinformlik.mat XX YY sigma2vals;
-load ../data/regressinformlik.mat;
-X = XX{i};
-Y = YY{i};
+% --- Data (sigma2 = 0.1^2, d ~ 1001) ---
+i = 2;
+load regressinformlik_d1000.mat;
+X      = XX{i};
+Y      = YY{i};
 sigma2 = sigma2vals(i);
 
-% model options
-options = gpsampOptions('regression'); 
-
-% create the model
-model = gpsampCreate(Y, X, options);
-model.Likelihood.logtheta = log(sigma2);
-
+% --- Model ---
+options = gpsampOptions('regression');
+model   = gpsampCreate(Y, X, options);
+model.Likelihood.logtheta   = log(sigma2);
 model.constraints.kernHyper = 'fixed';
-model.constraints.likHyper = 'fixed';
+model.constraints.likHyper  = 'fixed';
 
-mcmcoptions.T = 5000;
-mcmcoptions.Burnin = 10000;
-if i == 3
-mcmcoptions.Burnin = 30000;
-end
-mcmcoptions.StoreEvery = 1;
-mcmcoptions.Langevin = 0;
-
-model.K = kernCompute(model.GP, model.X);
-[model.U, model.Lambda, tmp] = svd(model.K);
+model.K      = kernCompute(model.GP, model.X);
+[model.U, model.Lambda, ~] = svd(model.K);
 model.Lambda = diag(model.Lambda);
-%[L,er]=chol(model.K);
-%model.L = L;
-model.L = diag(model.Lambda.^0.5)*(model.U');
+model.L      = diag(model.Lambda.^0.5) * (model.U');
 
+% --- MCMC options ---
+mcmcoptions.T          = 5000;
+mcmcoptions.Burnin     = 10000;
+mcmcoptions.StoreEvery = 1;
+mcmcoptions.Langevin   = 0;
+
+% --- Run ---
 tic;
-[model samples accRates] = gpsamppCN_fixedhypers(model, mcmcoptions);
+[model, samples, accRates] = gpsamppCN_fixedhypers(model, mcmcoptions);
 elapsedTime = toc;
 
-% compute statistics 
-summarypCN{i} = summaryStatistics(samples);
-summarypCN{i}.elapsed = elapsedTime;
-summarypCN{i}.accRates = accRates;
-summarypCN{i}.delta = model.delta; 
-summarypCN{i}.beta = model.beta; 
-summarypCN{i}.eff_LogL = mcmc_ess(samples.LogL(mcmcoptions.Burnin+1:end));
+% --- Save ---
+summarypCN            = summaryStatistics(samples);
+summarypCN.elapsed    = elapsedTime;
+summarypCN.accRates   = accRates;
+summarypCN.delta      = model.delta;
+summarypCN.beta       = model.beta;
+summarypCN.eff_LogL   = mcmc_ess(samples.LogL(mcmcoptions.Burnin+1:end));
+LogL = samples.LogL(mcmcoptions.Burnin+1:end);
 
-end
-
-if storeRes == 1
-    save(['../results/' dataName '_repeat' num2str(rep) '.mat'], 'summarypCN');
-end
-
+save(['results/GPregression/regression_repeat' num2str(rep) '_pCN.mat'], 'summarypCN', 'LogL');
+fprintf('Saved: results/GPregression/regression_repeat%d_pCN.mat\n', rep);

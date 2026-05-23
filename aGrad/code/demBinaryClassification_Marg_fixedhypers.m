@@ -132,7 +132,8 @@ for dataName = {'Australian' 'German' 'Heart' 'Pima' 'Ripley'}% 'Caravan'}
    summaryMarg.accRates = accRates;
    summaryMarg.delta = model.delta; 
    summaryMarg.eff_LogL = mcmc_ess(samples.LogL(mcmcoptions.Burnin+1:end));
+   LogL = samples.LogL(mcmcoptions.Burnin+1:end);
 
-   save(['results/LogisticRegression_GP/' dataName{1} '_repeat' num2str(rep) '_Marg_fixedhypers.mat'], 'summaryMarg');
+   save(['results/LogisticRegression_GP/' dataName{1} '_repeat' num2str(rep) '_Marg_fixedhypers.mat'], 'summaryMarg', 'LogL');
 %    
 end
