@@ -102,29 +102,29 @@ methods <- list(
                    sprintf("%s_repeat%d_pCN_fixedhypers.mat", ds, r)))
 )
 
-method_names <- sapply(methods, `[[`, "name")
+# Facet order: top row left-to-right, bottom row left-to-right
+facet_order <- c("pCN", "pCNL", "Ellipt", "mGrad", "GI-MALA", "pMALA(M)")
 
-# Order for display (worst to best, roughly)
-level_order  <- c("pCN", "pCNL", "Ellipt", "mGrad", "pMALA(M)", "GI-MALA")
-linetypes    <- c("GI-MALA" = "solid", "pMALA(M)" = "dashed",
-                  "mGrad"   = "dotted","Ellipt"   = "dotdash",
-                  "pCNL"    = "longdash", "pCN"   = "twodash")
+# One distinct colour per method (matches left-to-right, top-to-bottom order)
+method_colours <- c(
+  "pCN"       = "#E41A1C",
+  "pCNL"      = "#FF7F00",
+  "Ellipt"    = "#4DAF4A",
+  "mGrad"     = "#00B3B3",
+  "GI-MALA"   = "#377EB8",
+  "pMALA(M)"  = "#984EA3"
+)
 
-# ---- read LogL from a .mat file (rep 1) for trace plot ---------------
+# ---- read LogL from a .mat file --------------------------------------
 read_logL <- function(m, ds, rep) {
   path <- m$file_fn(ds, rep)
-  if (!file.exists(path)) {
-    warning("File not found: ", path); return(NULL)
-  }
+  if (!file.exists(path)) { warning("File not found: ", path); return(NULL) }
   mat <- readMat(path)
-  if (m$flat) {
-    return(as.vector(mat[["LogL"]]))
-  } else {
-    return(find_field(mat[[m$struct_name]], "LogL"))
-  }
+  if (m$flat) return(as.vector(mat[["LogL"]]))
+  find_field(mat[[m$struct_name]], "LogL")
 }
 
-# ---- build trace-plot data frame (rep = 1) ---------------------------
+# ---- trace-plot data frame (rep = 1) ---------------------------------
 trace_list <- lapply(methods, function(m) {
   logL <- read_logL(m, dataset_name, rep = 1)
   if (is.null(logL)) return(NULL)
@@ -134,45 +134,41 @@ trace_list <- lapply(methods, function(m) {
              stringsAsFactors = FALSE)
 })
 trace_df <- do.call(rbind, Filter(Negate(is.null), trace_list))
-trace_df$method <- factor(trace_df$method, levels = level_order)
+trace_df$method <- factor(trace_df$method, levels = facet_order)
 
-# ---- build boxplot data frame (all reps) -----------------------------
+# ---- boxplot data frame (all reps) -----------------------------------
 box_list <- lapply(methods, function(m) {
   means <- vapply(seq_len(Repeats), function(r) {
     logL <- read_logL(m, dataset_name, rep = r)
     if (is.null(logL)) return(NA_real_)
     mean(logL, na.rm = TRUE)
   }, numeric(1))
-  data.frame(method    = m$name,
-             mean_logL = means,
-             stringsAsFactors = FALSE)
+  data.frame(method = m$name, mean_logL = means, stringsAsFactors = FALSE)
 })
 box_df <- do.call(rbind, box_list)
-box_df$method <- factor(box_df$method, levels = level_order)
+box_df$method <- factor(box_df$method, levels = facet_order)
 
-# ---- Panel 1: trace plot --------------------------------------------
-p1 <- ggplot(trace_df,
-             aes(x = iter, y = logL, group = method, linetype = method)) +
-  geom_line(colour = "black", linewidth = 0.45) +
-  scale_linetype_manual(values = linetypes, name = NULL,
-                        breaks = level_order) +
-  labs(title   = dataset_name,
-       x       = "Iteration",
-       y       = "Log-likelihood") +
-  theme_bw(base_size = 11) +
-  theme(legend.position = "bottom",
-        legend.key.width = unit(1.4, "cm"),
-        plot.title = element_text(size = 11))
+# ---- Panel 1: faceted trace plots (2 rows × 3 cols) -----------------
+p1 <- ggplot(trace_df, aes(x = iter, y = logL, colour = method)) +
+  geom_line(linewidth = 0.35) +
+  facet_wrap(~ method, nrow = 2, ncol = 3, scales = "free_y") +
+  scale_colour_manual(values = method_colours, guide = "none") +
+  labs(x = "Iteration", y = "Log-likelihood") +
+  theme_bw(base_size = 10) +
+  theme(strip.text       = element_text(size = 9, face = "bold"),
+        strip.background = element_rect(fill = "grey92", colour = NA),
+        axis.text        = element_text(size = 7),
+        panel.spacing    = unit(0.4, "lines"))
 
-# ---- Panel 2: boxplot -----------------------------------------------
+# ---- Panel 2: boxplots of mean log-likelihood over 10 reps ----------
 p2 <- ggplot(box_df, aes(x = method, y = mean_logL)) +
-  geom_boxplot(fill = "white", colour = "black", width = 0.5,
+  geom_boxplot(fill = "grey90", colour = "black", width = 0.55,
                outlier.size = 1) +
-  labs(x = NULL, y = "Mean log-likelihood") +
-  theme_bw(base_size = 11) +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1, size = 9))
+  labs(x = NULL, y = "Means of log-likelihood") +
+  theme_bw(base_size = 10) +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1, size = 8))
 
 # ---- combine and save -----------------------------------------------
-fig4 <- grid.arrange(p1, p2, ncol = 2, widths = c(2, 1))
-ggsave(fig4_path, plot = fig4, width = 9, height = 4)
+fig4 <- grid.arrange(p1, p2, ncol = 2, widths = c(3, 2))
+ggsave(fig4_path, plot = fig4, width = 11, height = 5)
 cat("Written:", fig4_path, "\n")

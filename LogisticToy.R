@@ -213,30 +213,30 @@ ESSmat2[2, ] <- apply(resultsESS[, , 2], 1, mean)
 #   Right : boxplots of mean log-likelihood over 10 reps
 # =====================================================================
 
-method_labels <- c("pMALA", "GI-MALA")
-method_lts    <- c("pMALA" = "dashed", "GI-MALA" = "solid")
-method_factor <- factor(method_labels, levels = method_labels)
+method_labels  <- c("pMALA", "GI-MALA")
+method_colours <- c("pMALA" = "#984EA3", "GI-MALA" = "#377EB8")
 
-# --- Panel 1: trace plot (rep = 1) ------------------------------------
-n_show <- its   # show all post-burnin iterations
+# --- Panel 1: faceted trace plots (1 row × 2 cols, rep = 1) ----------
 trace_list <- lapply(seq_along(method_labels), function(mi) {
   data.frame(
-    iter   = seq_len(n_show),
-    logL   = likStore2[seq_len(n_show), 1, mi],
+    iter   = seq_len(its),
+    logL   = likStore2[, 1, mi],
     method = method_labels[mi]
   )
 })
 trace_df <- do.call(rbind, trace_list)
 trace_df$method <- factor(trace_df$method, levels = method_labels)
 
-p1 <- ggplot(trace_df, aes(x = iter, y = logL,
-                            group = method, linetype = method)) +
-  geom_line(colour = "black", linewidth = 0.5) +
-  scale_linetype_manual(values = method_lts, name = NULL) +
+p1 <- ggplot(trace_df, aes(x = iter, y = logL, colour = method)) +
+  geom_line(linewidth = 0.35) +
+  facet_wrap(~ method, nrow = 1, ncol = 2, scales = "free_y") +
+  scale_colour_manual(values = method_colours, guide = "none") +
   labs(x = "Iteration", y = "Log-likelihood") +
-  theme_bw(base_size = 11) +
-  theme(legend.position = "bottom",
-        legend.key.width = unit(1.2, "cm"))
+  theme_bw(base_size = 10) +
+  theme(strip.text       = element_text(size = 9, face = "bold"),
+        strip.background = element_rect(fill = "grey92", colour = NA),
+        axis.text        = element_text(size = 7),
+        panel.spacing    = unit(0.4, "lines"))
 
 # --- Panel 2: boxplots of mean log-likelihood over 10 reps -----------
 box_list <- lapply(seq_along(method_labels), function(mi) {
@@ -247,11 +247,12 @@ box_df <- do.call(rbind, box_list)
 box_df$method <- factor(box_df$method, levels = method_labels)
 
 p2 <- ggplot(box_df, aes(x = method, y = mean_logL)) +
-  geom_boxplot(fill = "white", colour = "black", width = 0.5) +
-  labs(x = NULL, y = "Mean log-likelihood") +
-  theme_bw(base_size = 11)
+  geom_boxplot(fill = "grey90", colour = "black", width = 0.55,
+               outlier.size = 1) +
+  labs(x = NULL, y = "Means of log-likelihood") +
+  theme_bw(base_size = 10)
 
 # --- combine and save -------------------------------------------------
-fig3 <- grid.arrange(p1, p2, ncol = 2, widths = c(2, 1))
-ggsave(fig3_path, plot = fig3, width = 9, height = 4)
+fig3 <- grid.arrange(p1, p2, ncol = 2, widths = c(3, 2))
+ggsave(fig3_path, plot = fig3, width = 9, height = 3.5)
 cat("Written:", fig3_path, "\n")
