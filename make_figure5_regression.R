@@ -1,4 +1,11 @@
 rm(list = ls())
+
+# ---- install missing packages ----------------------------------------
+pkgs_needed <- c("R.matlab", "ggplot2", "gridExtra")
+pkgs_new    <- pkgs_needed[!pkgs_needed %in% installed.packages()[, "Package"]]
+if (length(pkgs_new)) install.packages(pkgs_new)
+# ----------------------------------------------------------------------
+
 library(R.matlab)
 library(ggplot2)
 library(gridExtra)
