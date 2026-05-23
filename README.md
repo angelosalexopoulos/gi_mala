@@ -11,8 +11,8 @@ This repository contains the code to reproduce all computational results in:
 
 ### MATLAB
 - **MATLAB R2020a or later** (tested on R2023b)
-- Required toolboxes: Statistics and Machine Learning Toolbox, Parallel Computing Toolbox (for `parfor` acceleration; optional — replace `parfor` with `for` if unavailable)
-- No additional third-party MATLAB packages are required; all utility functions are included in `aGrad/code/toolbox/`
+- Required toolboxes: Statistics and Machine Learning Toolbox
+- No additional third-party MATLAB packages required; all utility functions are in `aGrad/code/toolbox/`
 
 ### R
 - **R 4.0 or later** (tested on R 4.3.2)
@@ -30,250 +30,277 @@ This repository contains the code to reproduce all computational results in:
 ```
 .
 ├── README.md                    ← this file
-├── run_all_experiments.m        ← master wrapper (runs everything in order)
-├── run_VR_experiments.m         ← VR wrapper (100 reps × multiple T values for Tables 7, 8, 12)
+├── run_all_experiments.m        ← Step 1: runs all MCMC samplers for paper Tables 3–5, 9–11, 15
+├── run_VR_experiments.m         ← Step 1 (VR): runs GI-MALA-VR for Tables 7, 8, 12 (heavy, ~days)
 │
-├── demos_binaryclassification.m ← Step 1a: run binary classification simulations
-├── demos_logGaussianCox.m       ← Step 1b: run Log-Gaussian Cox process simulations
+├── make_results_binaryclassification.m  ← Step 2: Tables 3,4,9,10,11; Figures 4,5
+├── make_results_cox.m                   ← Step 2: Table 5; Figure 6
+├── make_results_regression.m            ← Step 2: Table 15
+├── make_results_VR_binaryclassification.m ← Step 2 (VR): Tables 7, 12
+├── make_results_VR_girolami.m             ← Step 2 (VR): Table 8
 │
-├── demBinaryClassification_Marg_fixedhypers_gimala.m    ← GI-MALA sampler demo (binary classif.)
-├── demBinaryClassification_Marg_fixedhypers_gimala_VR.m ← GI-MALA + variance reduction demo
-├── demBinaryClassification_Marg_fixedhypers_pMALA.m     ← preconditioned MALA demo (binary classif.)
+├── demRegressInformLikelMarg_fixedhypers_gimala.m       ← GI-MALA demo (GP regression)
+├── demRegressInformLikelMarg_fixedhypers_pMALA.m        ← pMALA demo (GP regression)
+│
+├── demBinaryClassification_Marg_fixedhypers_gimala.m    ← GI-MALA demo (binary classif.)
+├── demBinaryClassification_Marg_fixedhypers_gimala_VR.m ← GI-MALA-VR demo (binary classif.)
+├── demBinaryClassification_Marg_fixedhypers_pMALA.m     ← pMALA demo (binary classif.)
 ├── demLogGaussianCoxGirolamiMarg_gimala.m               ← GI-MALA demo (Cox process)
-├── demLogGaussianCoxGirolamiMarg_gimala_VR.m            ← GI-MALA + VR demo (Cox process)
+├── demLogGaussianCoxGirolamiMarg_gimala_VR.m            ← GI-MALA-VR demo (Cox process)
 ├── demLogGaussianCoxGirolamiMarg_pMALA.m                ← pMALA demo (Cox process)
 │
-├── gpsampAuxMarg_fixedhypers_gimala.m      ← GI-MALA sampler implementation (core algorithm)
-├── gpsampAuxMarg_fixedhypers_gimala_Gauss.m← GI-MALA sampler (Gaussian likelihood variant)
-├── gpsampAuxMarg_fixedhypers_pMALA.m       ← preconditioned MALA sampler implementation
-├── ergMean.m                               ← ergodic mean utility
+├── gpsampAuxMarg_fixedhypers_gimala.m       ← GI-MALA sampler (core algorithm)
+├── gpsampAuxMarg_fixedhypers_gimala_Gauss.m ← GI-MALA sampler (Gaussian likelihood variant)
+├── gpsampAuxMarg_fixedhypers_pMALA.m        ← pMALA sampler implementation
+├── ergMean.m                                ← ergodic mean utility
 │
-├── tmcmc.R       ← Step 1c: variance reduction for tail probability (Section 5.2.1 / Figure 1; Appendix A.2 / Table 13)
-├── tmcmc_ess.R   ← Step 1d: ESS comparison on univariate Student-t (Appendix A.2 / Table 14, Figure 3)
-│
-├── make_table2_logistic.R ← Step 1f: ESS comparison, Bayesian logistic regression (Table 2, Section 5.1.1)
-├── make_table6_logistic.R ← Step 1f: VR factors, Bayesian logistic regression (Table 6, Section 5.2)
-├── LogisticToy.R          ← exploratory logistic regression script (basis for the above)
+├── tmcmc.R                ← R: VR for tail probability (Figure 1 / Table 13)
+├── tmcmc_ess.R            ← R: ESS on univariate Student-t (Table 14 / Figure 3)
+├── LogisticToy.R          ← R: logistic-regression toy MCMC → Figure 3
+├── make_table2_logistic.R ← R: ESS comparison, Bayesian logistic regression (Table 2)
+├── make_table6_logistic.R ← R: VR factors, Bayesian logistic regression (Table 6)
+├── make_figure4_logistic.R ← R: Figure 4 (GP binary classif. trace + boxplot)
+├── make_figure5_regression.R ← R: Figure 5 (GP regression trace + boxplot)
+├── make_figure6_cox.R      ← R: Figure 6 (Cox process trace + boxplot)
 │
 ├── RMHMC/
-│   ├── demLogGaussianCoxGirolamiRHMC.m  ← RMHMC baseline demo (Cox process)
-│   └── LGC_RMHMC_LV.m                  ← RMHMC sampler for Log-Gaussian Cox
+│   ├── demLogGaussianCoxGirolamiRHMC.m  ← RHMC baseline demo (Cox process)
+│   └── LGC_RMHMC_LV.m                  ← RHMC sampler for Log-Gaussian Cox
 │
 ├── aGrad/
-│   └── code/
-│       ├── demos_binaryclassification_fixedhypers.m  ← runner for fixed-hyperparameter baselines
-│       ├── demos_binaryclassification_learnhypers.m  ← runner for learned-hyperparameter baselines
-│       ├── demos_girolami.m                          ← runner for Cox process baselines
-│       ├── demos_informlik.m                         ← runner for informative-likelihood experiment
-│       ├── make_results_binaryclassification_fixedhypers.m ← Step 2a: generate figures/tables
-│       ├── make_results_girolami.m                         ← Step 2b: generate figures/tables
-│       ├── make_results_girolami_mMALA_RHMC.m              ← Step 2c: generate RHMC comparison
-│       ├── make_results_VR_binaryclassification.m          ← Step 2d: Tables 7, 12 (VR factors)
-│       ├── make_results_VR_girolami.m                      ← Step 2d: Table 8 (VR factors)
-│       ├── toolbox/                    ← shared utility functions (kernels, likelihood, ESS, etc.)
-│       └── data/                       ← benchmark datasets
+│   ├── code/
+│   │   ├── demBinaryClassification_Marg_fixedhypers.m    ← mGrad baseline (binary classif.)
+│   │   ├── demBinaryClassification_Ellipt_fixedhypers.m  ← Elliptical baseline (binary classif.)
+│   │   ├── demBinaryClassification_pCN_fixedhypers.m     ← pCN baseline (binary classif.)
+│   │   ├── demBinaryClassification_pCNL_fixedhypers.m    ← pCNL baseline (binary classif.)
+│   │   ├── demLogGaussianCoxGirolamiMarg.m   ← mGrad baseline (Cox process)
+│   │   ├── demLogGaussianCoxGirolamiEllipt.m ← Elliptical baseline (Cox process)
+│   │   ├── demLogGaussianCoxGirolamipCN.m    ← pCN baseline (Cox process)
+│   │   ├── demLogGaussianCoxGirolamipCNL.m   ← pCNL baseline (Cox process)
+│   │   ├── toolbox/   ← shared utility functions (kernels, likelihood, ESS, etc.)
+│   │   └── ...        ← legacy make_results scripts (not used for paper tables)
+│   └── data/          ← benchmark datasets
 │
-└── results/
-    ├── LogisticRegression_GP/   ← MCMC output files saved here (binary classification)
-    └── Cox_regression/          ← MCMC output files saved here (Cox process)
+├── results/
+│   ├── LogisticRegression_GP/   ← Step 1 output: binary classification .mat files
+│   ├── Cox_regression/          ← Step 1 output: Cox process .mat files
+│   └── GPregression/            ← Step 1 output: GP regression .mat files
+│
+└── diagrams/                    ← Step 2 output: figures (.eps, .pdf) and LaTeX snippets (.txt)
 ```
 
 ---
 
-## Step-by-Step Instructions to Reproduce All Results
+## Full Reproduction Pipeline
 
-> **Estimated total runtime:** ~2–4 hours on a modern multi-core machine with 10 parallel workers.  
-> For a quick test, set `Repeats = 1` and `mcmcoptions.T = 100` in any script.
+```
+Step 1 (MATLAB, from repo root)          Step 2 (MATLAB, from repo root)
+────────────────────────────────         ────────────────────────────────────
+run_all_experiments       ──►  results/**/*.mat
+                                         │
+                                         ▼
+                                make_results_binaryclassification  ──►  diagrams/
+                                make_results_cox                   ──►  diagrams/
 
-### Step 1 — Run MCMC simulations
+run_VR_experiments        ──►  results/**/*_VR_*.mat
+                                         │
+                                         ▼
+                                make_results_VR_binaryclassification  ──►  diagrams/
+                                make_results_VR_girolami               ──►  diagrams/
 
-All simulations can be run in one go by calling the master wrapper from MATLAB:
+R scripts (from repo root in R)  ──►  diagrams/
+```
+
+**All scripts are run from the repository root. No `cd` required.**
+
+---
+
+## Step 1 — Run MCMC Simulations
 
 ```matlab
 run_all_experiments
 ```
 
-Alternatively, run each experiment individually as described below.
+Runs all methods for both experiments and saves results to `results/`. Set `Repeats = 1` at the
+top of the script for a quick smoke-test; `Repeats = 10` for full paper results.
 
----
+> **Runtime:** RHMC in Experiment 2 dominates (~2–6 hours per repeat). All other methods
+> per repeat: ~1–3 hours total. For a quick check skip RHMC by commenting out
+> `demLogGaussianCoxGirolamiRHMC(r)`.
 
-#### Step 1a — Binary Classification (Sections 5.1.1 and 5.1.2)
+### Experiment 1 — Binary Classification
 
-From the repository root in MATLAB:
+Datasets: Australian, German, Heart, Pima, Ripley.
 
-```matlab
-addpath aGrad/code
-addpath aGrad/code/toolbox
-addpath aGrad/data
+| Demo called | Method | Output folder | Output `.mat` filename |
+|---|---|---|---|
+| `demBinaryClassification_Marg_fixedhypers_pMALA` | pMALA | `results/LogisticRegression_GP/` | `<Dataset>_repeat<r>_Marg_fixedhypers_pMALA.mat` |
+| `demBinaryClassification_Marg_fixedhypers` | mGrad | `results/LogisticRegression_GP/` | `<Dataset>_repeat<r>_Marg_fixedhypers.mat` |
+| `demBinaryClassification_Ellipt_fixedhypers` | Ellipt | `results/LogisticRegression_GP/` | `<Dataset>_repeat<r>_Ellipt_fixedhypers.mat` |
+| `demBinaryClassification_pCN_fixedhypers` | pCN | `results/LogisticRegression_GP/` | `<Dataset>_repeat<r>_pCN_fixedhypers.mat` |
+| `demBinaryClassification_pCNL_fixedhypers` | pCNL | `results/LogisticRegression_GP/` | `<Dataset>_repeat<r>_pCNL_fixedhypers.mat` |
+| `demBinaryClassification_Marg_fixedhypers_gimala` | **GI-MALA** | `results/LogisticRegression_GP/` | `<Dataset>_repeat<r>_Marg_fixedhypers_gimala.mat` |
 
-% Run all baseline methods (aGrad-z, aGrad-u, mGrad, Ellipt, pCN, pCNL)
-demos_binaryclassification        % calls aGrad/code/demos_binaryclassification_fixedhypers.m
+### Experiment 2 — Log-Gaussian Cox Process
 
-% Run the new GI-MALA variants introduced in this paper
-demos_binaryclassification        % also calls demBinaryClassification_Marg_fixedhypers_gimala
-                                  %              demBinaryClassification_Marg_fixedhypers_gimala_VR
-                                  %              demBinaryClassification_Marg_fixedhypers_pMALA
-```
+| Demo called | Method | Output folder | Output `.mat` filename |
+|---|---|---|---|
+| `demLogGaussianCoxGirolamiMarg` | mGrad | `results/Cox_regression/` | `logGaussianCoxGirolami_Marg_repeat<r>.mat` |
+| `demLogGaussianCoxGirolamiMarg_pMALA` | pMALA | `results/Cox_regression/` | `logGaussianCoxGirolami_Marg_repeat<r>_Marg_pMALA.mat` |
+| `demLogGaussianCoxGirolamiEllipt` | Ellipt | `results/Cox_regression/` | `logGaussianCoxGirolami_Ellipt_repeat<r>.mat` |
+| `demLogGaussianCoxGirolamipCN` | pCN | `results/Cox_regression/` | `logGaussianCoxGirolami_pCN_repeat<r>.mat` |
+| `demLogGaussianCoxGirolamipCNL` | pCNL | `results/Cox_regression/` | `logGaussianCoxGirolami_pCNL_repeat<r>.mat` |
+| `demLogGaussianCoxGirolamiRHMC` | RHMC | `results/Cox_regression/` | `logGaussianCoxGirolami_RHMC_repeat<r>_RHMC.mat` |
+| `demLogGaussianCoxGirolamiMarg_gimala` | **GI-MALA** | `results/Cox_regression/` | `logGaussianCoxGirolami_Marg_repeat<r>_gimala.mat` |
 
-Results are saved in `results/LogisticRegression_GP/` as `.mat` files, one per method × dataset × repeat.
+### Experiment 3 — GP Regression with Informative Likelihood
 
----
+Dataset: `regressinformlik_d1000.mat`, sigma2 = 0.1², d ≈ 1001.
 
-#### Step 1b — Log-Gaussian Cox Process (Section 5.1.3)
+| Demo called | Method | Output folder | Output `.mat` filename |
+|---|---|---|---|
+| `demRegressInformLikelMarg_fixedhypers_pMALA` | pMALA | `results/GPregression/` | `regression_repeat<r>_pMALA.mat` |
+| `demRegressInformLikelMarg_fixedhypers` | mGrad | `results/GPregression/` | `regression_repeat<r>_Marg.mat` |
+| `demRegressInformLikelEllipt_fixedhypers` | Ellipt | `results/GPregression/` | `regression_repeat<r>_Ellipt.mat` |
+| `demRegressInformLikelpCN_fixedhypers` | pCN | `results/GPregression/` | `regression_repeat<r>_pCN.mat` |
+| `demRegressInformLikelpCNL_fixedhypers` | pCNL | `results/GPregression/` | `regression_repeat<r>_pCNL.mat` |
+| `demRegressInformLikelMarg_fixedhypers_gimala` | **GI-MALA** | `results/GPregression/` | `regression_repeat<r>_gimala.mat` |
 
-```matlab
-addpath aGrad/code
-addpath aGrad/code/toolbox
-addpath aGrad/data
-addpath RMHMC
-
-demos_logGaussianCox   % runs all Cox process methods including GI-MALA, pMALA, and RMHMC
-```
-
-Results are saved in `results/Cox_regression/` as `.mat` files.
-
----
-
-#### Step 1e — Variance Reduction Experiments for Tables 7, 8, 12 (Section 5.2)
-
-From the repository root in MATLAB:
+### Variance-reduction experiments — run separately
 
 ```matlab
 run_VR_experiments
 ```
 
-This script runs `demBinaryClassification_Marg_fixedhypers_gimala_VR` for 100 repeats × 4 chain lengths (T ∈ {1,000; 10,000; 50,000; 200,000}) and `demLogGaussianCoxGirolamiMarg_gimala_VR` for 100 repeats × 2 chain lengths (T ∈ {1,000; 10,000}).
-
-> **Runtime warning**: the full run is computationally intensive (100 reps × T=200,000 for 5 datasets). For a quick smoke-test, set `Repeats = 20` and `T_list_binary = [1000]` at the top of `run_VR_experiments.m` before running.
-
-Results are saved as `<Dataset>_repeat<r>_Marg_fixedhypers_VR_<T>.mat` in the appropriate `results/` subdirectory.
-
-> **Note on Table 6** (Bayesian logistic regression VR, Section 5.2): a VR demo for the fixed-coefficient logistic regression setting does not currently exist in this repository. Table 6 cannot be reproduced from the present code.
+Produces `*_VR_<T>.mat` files for T ∈ {1k, 10k, 50k, 200k} (binary) and T ∈ {1k, 10k} (Cox),
+over 100 repeats each. Runtime: ~days. For a quick check set `Repeats = 20` and reduce `T_list`.
 
 ---
 
-#### Step 1f — Bayesian Logistic Regression (Section 5.1.1 / **Table 2** and Section 5.2 / **Table 6**)
+## Step 2 — Generate Figures and LaTeX Tables
 
-Open R (version ≥ 4.0) and run:
+All four scripts are run from the **repository root**. Output goes to `diagrams/`.
+Any method whose `.mat` files are missing is silently skipped (no error).
 
-```r
-source("make_table2_logistic.R")   # ESS comparison (Table 2, Section 5.1.1)
-source("make_table6_logistic.R")   # Variance reduction factors (Table 6, Section 5.2)
+### Binary Classification (Tables 3, 4, 9, 10, 11 / Figures 4, 5)
+
+```matlab
+make_results_binaryclassification
 ```
 
-Both scripts read data from the path set in `data_dir` at the top of each file (default: `/Users/angelos/Desktop/vr_pCN/data`). Edit this path if your data lives elsewhere. Required packages: `MASS`, `coda`.
+| Output file in `diagrams/` | Paper reference |
+|---|---|
+| `Table3.txt` | **Table 3** (Section 5.1.2) — Heart |
+| `Table4.txt` | **Table 4** (Section 5.1.2) — Australian |
+| `Table9.txt` | **Table 9** (Appendix A.1) — German |
+| `Table10.txt` | **Table 10** (Appendix A.1) — Pima |
+| `Table11.txt` | **Table 11** (Appendix A.1) — Ripley |
+| `<Dataset>_<method>_logL_fixedhypers.pdf` | **Figures 4, 5** (Appendix A.3) |
 
-| Script | Output file | Corresponds to |
+Each table contains rows for: mGrad, pMALA, Ellipt, pCN, pCNL, **GI-MALA**.  
+Columns: Time(s), step size δ, ESS (Min, Med, Max), Min ESS/s.
+
+### Log-Gaussian Cox Process (Table 5 / Figure 6)
+
+```matlab
+make_results_cox
+```
+
+| Output file in `diagrams/` | Paper reference |
+|---|---|
+| `Table5_N64.txt` | **Table 5** (Section 5.1.3), N=64 |
+| `Table5_N32.txt` | **Table 5** (Section 5.1.3), N=32 |
+| `GaussianCox_<method>_logL1.pdf` | **Figure 6** (Appendix A.3) |
+
+`table1` (N=64) contains: mGrad, pMALA, Ellipt, pCN, pCNL, RHMC, **GI-MALA**.  
+`table2` (N=32) contains: mGrad, Ellipt, pCN, pCNL (pMALA, RHMC and GI-MALA run at N=64 only).
+
+### GP Regression (Table 15)
+
+```matlab
+make_results_regression
+```
+
+| Output file in `diagrams/` | Paper reference |
+|---|---|
+| `Table15.txt` | **Table 15** — GP regression, mGrad / pMALA / Ellipt / pCN / pCNL / GI-MALA |
+
+### Variance Reduction (Tables 7, 8, 12)
+
+```matlab
+make_results_VR_binaryclassification   % Tables 7, 12
+make_results_VR_girolami               % Table 8
+```
+
+| Output file in `diagrams/` | Paper reference |
+|---|---|
+| `Table7.txt` | **Table 7** (Section 5.2) |
+| `Table12.txt` | **Table 12** (Appendix A.1) |
+| `Table8.txt` | **Table 8** (Section 5.2) |
+
+---
+
+## R-Based Experiments
+
+Self-contained; do not depend on the MATLAB runs. Run from the repository root in R.
+
+```r
+source("make_table2_logistic.R")    # Table 2 (Section 5.1.1)
+source("make_table6_logistic.R")    # Table 6 (Section 5.2)
+source("tmcmc.R")                   # Figure 1 / Table 13 (Section 5.2.1 / Appendix A.2)
+source("tmcmc_ess.R")               # Table 14 (Appendix A.2)
+source("LogisticToy.R")             # Figure 3 (Section 5.1.1, logistic toy)
+source("make_figure4_logistic.R")   # Figure 4 (GP binary classification)
+source("make_figure5_regression.R") # Figure 5 (GP regression)
+source("make_figure6_cox.R")        # Figure 6 (Log-Gaussian Cox process)
+```
+
+> `make_table*.R` and `LogisticToy.R` read data from the path set in `data_dir` at the top of each file. Edit before running.
+> `make_figure4/5/6_*.R` read from `results/` (produced by Step 1) and require the `R.matlab` package.
+
+| Script | Output file | Paper reference |
 |---|---|---|
-| `make_table2_logistic.R` | `table2_logistic.tex` | **Table 2** (Section 5.1.1): ESS for GI-MALA vs. pMALA, Heart/Australian/German (10 repeats) |
-| `make_table6_logistic.R` | `table6_logistic.tex` | **Table 6** (Section 5.2): VR factors, Heart/Australian, n ∈ {1k, 10k, 50k, 200k} (100 repeats) |
-
-> **Runtime warning for `make_table6_logistic.R`**: 100 reps × T=200,000 is expensive. For a quick check, set `Repeats <- 20` and `T_list <- c(1000)` at the top of the script.
-
----
-
-#### Step 1c — Variance Reduction for Tail Probability Estimation (Section 5.2.1 / **Figure 1**)
-
-Open R (version ≥ 4.0) and run:
-
-```r
-source("tmcmc.R")
-```
-
-This script runs GI-MALA on a univariate Student-t target for combinations of degrees-of-freedom `nu` and threshold values `c`, and computes variance-reduction ratios. The output corresponds to **Figure 1** (Section 5.2.1) and **Table 13** (Appendix A.2, tabular version of Figure 1 for all b values).
+| `make_table2_logistic.R` | `table2_logistic.tex` | **Table 2** |
+| `make_table6_logistic.R` | `table6_logistic.tex` | **Table 6** |
+| `tmcmc.R` | `Figure1.pdf`, `Table13.tex` | **Figure 1 / Table 13** |
+| `tmcmc_ess.R` | `Table14.tex` | **Table 14** |
+| `LogisticToy.R` | `Figure3.pdf` | **Figure 3** |
+| `make_figure4_logistic.R` | `Figure4.pdf` | **Figure 4** |
+| `make_figure5_regression.R` | `Figure5.pdf` | **Figure 5** |
+| `make_figure6_cox.R` | `Figure6.pdf` | **Figure 6** |
 
 ---
 
-#### Step 1d — ESS Comparison on Univariate Student-t (Appendix A.2 / **Table 14**, **Figure 3**)
+## Complete Output Index
 
-```r
-source("tmcmc_ess.R")
-```
-
-This script compares GI-MALA, MALA, and RWM on a univariate Student-t for varying degrees of freedom. Outputs are written to the folder specified by `base_out_dir` (edit this path at the top of the script before running):
-
-| Output file | Corresponds to |
-|---|---|
-| `table_ess_t_selftuned.tex` | **Table 14** (Appendix A.2): ESS, acceptance rate, step size γ for GI-MALA, MALA, RWM |
-| `density_vs_true_*.pdf` | **Figure 3** (Appendix A.2): estimated stationary densities vs. true Student-t |
-
----
-
-### Step 2 — Generate Figures and Tables
-
-After all MCMC runs have completed (Step 1a–1b), generate the paper figures and tables from MATLAB:
-
-#### Step 2a — Binary Classification Figures and Tables
-
-```matlab
-cd aGrad/code
-make_results_binaryclassification_fixedhypers
-```
-
-This script reads the `.mat` files from `results/LogisticRegression_GP/` and writes to `aGrad/diagrams/`:
-
-| Output file pattern | Corresponds to |
-|---|---|
-| `Heart_table_fixedhypers.txt` | **Table 3** (Section 5.1.2): ESS comparison, Heart dataset (d=270) |
-| `Australian_table_fixedhypers.txt` | **Table 4** (Section 5.1.2): ESS comparison, Australian dataset (d=690) |
-| `German_table_fixedhypers.txt` | **Table 9** (Appendix A.1): ESS comparison, German dataset (d=1000) |
-| `Pima_table_fixedhypers.txt` | **Table 10** (Appendix A.1): ESS comparison, Pima dataset (d=532) |
-| `Ripley_table_fixedhypers.txt` | **Table 11** (Appendix A.1): ESS comparison, Ripley dataset (d=250) |
-| `<Dataset>_*_logL_fixedhypers.{eps,pdf}` | **Figures 4, 5** (Appendix A.3): log-likelihood trace plots (Heart, Australian) |
-
----
-
-#### Step 2b — Log-Gaussian Cox Process Figures and Tables
-
-```matlab
-cd aGrad/code
-make_results_girolami
-```
-
-Writes to `aGrad/diagrams/`:
-
-| Output file pattern | Corresponds to |
-|---|---|
-| `GaussianCox_table*.txt` | **Table 5** (Section 5.1.3): ESS comparison, Cox process (d=4096) |
-| `GaussianCox_*_logL*.{eps,pdf}` | **Figure 6** (Appendix A.3): log-likelihood trace plots and boxplots |
-| `GaussianCox_*_meanfield.{eps,pdf}` | posterior mean of the intensity field (Section 5.1.3) |
-| `GaussianCox_*_varfield.{eps,pdf}` | posterior variance of the intensity field (Section 5.1.3) |
-| `GaussianCox_*_expfield.{eps,pdf}` | posterior mean of exp(F) — inferred intensity (Section 5.1.3) |
-
----
-
-#### Step 2d — Variance Reduction Tables (Section 5.2 / **Tables 7, 8, 12**)
-
-After `run_VR_experiments` has completed (Step 1e), from `aGrad/code`:
-
-```matlab
-make_results_VR_binaryclassification
-make_results_VR_girolami
-```
-
-Writes to `aGrad/diagrams/`:
-
-| Output file | Corresponds to |
-|---|---|
-| `VR_GP_classification_table7.txt` | **Table 7** (Section 5.2): VR factors, GP binary classification (Heart d=270, Australian d=690) |
-| `VR_GP_classification_table12.txt` | **Table 12** (Appendix A.1): VR factors, remaining GP classification datasets (German d=1000, Pima d=532, Ripley d=250) |
-| `VR_GaussianCox_table8.txt` | **Table 8** (Section 5.2): VR factors, log-Gaussian Cox process (d=4096) |
-
----
-
-#### Step 2c — RHMC Comparison (included in **Table 5**)
-
-```matlab
-cd aGrad/code
-make_results_girolami_mMALA_RHMC
-```
-
-Processes the RMHMC results and adds them to the Cox process comparison (Table 5, Section 5.1.3).
+| Paper item | Produced by | Output file in `diagrams/` |
+|---|---|---|
+| **Table 2** | `make_table2_logistic.R` | `table2_logistic.tex` |
+| **Table 3** | `make_results_binaryclassification` | `Table3.txt` (Heart) |
+| **Table 4** | `make_results_binaryclassification` | `Table4.txt` (Australian) |
+| **Table 5** | `make_results_cox` | `Table5_N64.txt`, `Table5_N32.txt` |
+| **Table 6** | `make_table6_logistic.R` | `table6_logistic.tex` |
+| **Table 7** | `make_results_VR_binaryclassification` | `Table7.txt` |
+| **Table 8** | `make_results_VR_girolami` | `Table8.txt` |
+| **Table 9** | `make_results_binaryclassification` | `Table9.txt` (German) |
+| **Table 10** | `make_results_binaryclassification` | `Table10.txt` (Pima) |
+| **Table 11** | `make_results_binaryclassification` | `Table11.txt` (Ripley) |
+| **Table 12** | `make_results_VR_binaryclassification` | `Table12.txt` |
+| **Table 15** | `make_results_regression` | `Table15.txt` |
+| **Table 13** | `tmcmc.R` | `Table13.tex` |
+| **Table 14** | `tmcmc_ess.R` | `Table14.tex` (per GI-target subfolder) |
+| **Figure 1** | `tmcmc.R` | `Figure1.pdf` |
+| **Figure 3** | `LogisticToy.R` | `Figure3.pdf` |
+| **Figure 4** | `make_figure4_logistic.R` | `Figure4.pdf` |
+| **Figure 5** | `make_figure5_regression.R` | `Figure5.pdf` |
+| **Figure 6** | `make_figure6_cox.R` | `Figure6.pdf` |
 
 ---
 
 ## Notes
 
-- **Random seeds** are fixed at the top of each demo script (`randn('seed',1); rand('seed',1)`) to ensure exact reproducibility.
-- **Parallel execution**: `demos_binaryclassification.m` uses `parfor` with 10 workers. On machines with fewer cores, reduce the worker count or switch to a `for` loop — results will be identical but slower.
-- **Output directory**: All figures are written to `aGrad/diagrams/`. Ensure this directory exists before running `make_results_*.m` scripts.
+- **Random seeds** are fixed at the top of each demo script (`randn('seed',1); rand('seed',1)`) for exact reproducibility.
+- **Serial execution**: all experiments use plain `for` loops. `parfor` was removed because MATLAB parallel workers do not inherit the working directory reliably.
+- **Robustness**: `make_results_*.m` scripts skip any method whose `.mat` files are absent — partial runs produce valid tables for completed methods.
+- **Output directory**: all figures and LaTeX snippets go to `diagrams/` at the repository root, created automatically by `run_all_experiments.m`.
+- **aGrad-z / aGrad-u**: these methods are not included in the paper tables and are not run by `run_all_experiments.m`. Their demo scripts remain in `aGrad/code/` for reference only.
