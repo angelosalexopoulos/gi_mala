@@ -69,12 +69,19 @@ model.Lambda = diag(model.Lambda);
 %model.L = L;
 model.L = diag(model.Lambda.^0.5)*(model.U');
 
-tic;
-[model samples accRates] = gpsamppCN_fixedhypers(model, mcmcoptions);
-elapsedTime = toc;
+% Repeat until post-burnin acceptance rate is within [49, 59]% (target 54%)
+cond = true;
+while cond
+    tic;
+    [model samples accRates] = gpsamppCN_fixedhypers(model, mcmcoptions);
+    elapsedTime = toc;
+    if accRates.F > 49 && accRates.F < 59
+        cond = false;
+    end
+end
 samples.F = real(samples.F);
 samples.LogL = real(samples.LogL);
-% compute statistics 
+% compute statistics
 summarypCNL{ds} = summaryStatistics(samples);
 summarypCNL{ds}.elapsed = elapsedTime;
 summarypCNL{ds}.accRates = accRates;

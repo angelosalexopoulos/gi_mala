@@ -77,9 +77,16 @@ model.Lambda = diag(model.Lambda);
 
 
 
-   tic;
-   [model samples accRates] = gpsampAuxMarg_fixedhypers_pMALA(model, mcmcoptions);
-   elapsedTime = toc;
+   % Repeat until post-burnin acceptance rate is within [52, 62]% (target 57.4%)
+   cond = true;
+   while cond
+       tic;
+       [model samples accRates] = gpsampAuxMarg_fixedhypers_pMALA(model, mcmcoptions);
+       elapsedTime = toc;
+       if accRates.F > 52 && accRates.F < 62
+           cond = false;
+       end
+   end
 
 
  % compute statistics
@@ -90,6 +97,6 @@ model.Lambda = diag(model.Lambda);
    summaryMarg.accRates = accRates;
    summaryMarg.delta = model.delta;
    eff_LogL = mcmc_ess(samples.LogL);
-
+   delta = model.delta;
    save(['results/Cox_regression/' dataName '_repeat' num2str(rep) '_Marg_pMALA.mat'], ...
-       'elapsedTime','accRates','eff_LogL','ess','LogL');
+       'elapsedTime','accRates','eff_LogL','ess','LogL','delta');

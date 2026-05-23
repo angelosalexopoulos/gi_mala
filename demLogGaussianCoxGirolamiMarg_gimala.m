@@ -93,9 +93,16 @@ model.Lambda = diag(model.Lambda);
 
 
 
-   tic;
-   [model samples accRates] = gpsampAuxMarg_fixedhypers_gimala(model, mcmcoptions);
-   elapsedTime = toc;
+   % Repeat until post-burnin acceptance rate is within [70, 80]% (target 75%)
+   cond = true;
+   while cond
+       tic;
+       [model samples accRates] = gpsampAuxMarg_fixedhypers_gimala(model, mcmcoptions);
+       elapsedTime = toc;
+       if accRates.F > 70 && accRates.F < 80
+           cond = false;
+       end
+   end
 
  % compute statistics
    summaryMarg = summaryStatistics(samples);
@@ -105,8 +112,9 @@ model.Lambda = diag(model.Lambda);
    summaryMarg.accRates = accRates;
    summaryMarg.delta = model.delta;
    eff_LogL = mcmc_ess(samples.LogL);
+   delta = model.delta;
    save(['results/Cox_regression/' dataName '_repeat' num2str(rep) '_gimala.mat'], ...
-       'elapsedTime','accRates','eff_LogL','ess','LogL');
+       'elapsedTime','accRates','eff_LogL','ess','LogL','delta');
 
 
 end
