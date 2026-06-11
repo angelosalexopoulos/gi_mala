@@ -116,16 +116,11 @@ for dataName = {'Australian' 'German' 'Heart' 'Pima' 'Ripley'}% 'Caravan'}
    %model.L = L;
    model.L = diag(model.Lambda.^0.5)*(model.U');
    
-   % Repeat until post-burnin acceptance rate is within [49, 59]% (target 54%)
-   cond = true;
-   while cond
+
        tic;
        [model samples accRates] = gpsamppCN_fixedhypers(model, mcmcoptions);
        elapsedTime = toc;
-       if accRates.F > 49 && accRates.F < 59
-           cond = false;
-       end
-   end
+
 
    % compute statistics
    summarypCNL = summaryStatistics(samples);
@@ -133,7 +128,8 @@ for dataName = {'Australian' 'German' 'Heart' 'Pima' 'Ripley'}% 'Caravan'}
    summarypCNL.accRates = accRates;
    summarypCNL.delta = model.delta; 
    summarypCNL.eff_LogL = mcmc_ess(samples.LogL(mcmcoptions.Burnin+1:end));
+   LogL = samples.LogL(mcmcoptions.Burnin+1:end);
 
-   save(['results/LogisticRegression_GP/' dataName{1} '_repeat' num2str(rep) '_pCNL_fixedhypers.mat'], 'summarypCNL');
+   save(['results/LogisticRegression_GP/' dataName{1} '_repeat' num2str(rep) '_pCNL_fixedhypers.mat'], 'summarypCNL', 'LogL');
 %    
 end

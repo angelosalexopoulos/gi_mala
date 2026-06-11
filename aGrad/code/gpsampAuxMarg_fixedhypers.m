@@ -54,7 +54,7 @@ sqrtLambda2 = sqrt( deltaLambda.*(fourLambda + model.delta) )./(twoLambda + mode
 % Quantities that need to be updated when the state vector
 % changes
 gradloglikHandle = str2func(['grad', 'logL' model.Likelihood.type]);
-derF = gradloglikHandle(model.Likelihood, model.y, F);  
+[derF temp]= gradloglikHandle(model.Likelihood, model.y, F);  
 FU = F*model.U;
 derFU = model.U'*derF;   
 partOfMeanSamp = ( (2/model.delta)*FU  + derFU').*(Lambda1');
@@ -65,7 +65,7 @@ cnt = 0;
 
 Langevin = 1;
 range = 0.05;
-opt = 0.54;
+opt = 0.574;
 
 % adaption step size
 epsilon = 0.05;
@@ -83,7 +83,7 @@ for it = 1:(BurnInIters + Iters)
     
     % Metropolis-Hastings to accept-reject the proposal
     % new gradient 
-    derFnew = gradloglikHandle(model.Likelihood, model.y, Fnew);     
+    [derFnew temp] = gradloglikHandle(model.Likelihood, model.y, Fnew);     
     FUnew = Fnew*model.U;
     derFUnew = model.U'*derFnew;   
     partOfMeanSampnew = ( (2/model.delta)*FUnew + derFUnew').*(Lambda1');
@@ -147,4 +147,3 @@ end
 
 model.F = F;
 accRates.F = mean(acceptHistF(BurnInIters+1:end))*100; 
-

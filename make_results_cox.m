@@ -19,7 +19,6 @@
 % Run from the repository root after run_all_experiments.m.
 
 outdir = 'diagrams/';
-fontsz = 26;
 addpath results/Cox_regression/;
 
 datasetName = 'GaussianCox';
@@ -29,13 +28,13 @@ Repeats = 10;
 for i = 1:2
 
     % Pre-allocate all ESS arrays with NaN for robustness
-    [ESSminMarg,   ESSmedianMarg,   ESSmaxMarg,   ESSlogLMarg,   TrainTimeMarg,   deltaMarg  ] = deal(NaN(1,Repeats));
-    [ESSminMALA,   ESSmedianMALA,   ESSmaxMALA,   ESSlogLMALA,   TrainTimeMALA,   deltaMALA  ] = deal(NaN(1,Repeats));
-    [ESSminEllipt, ESSmedianEllipt, ESSmaxEllipt, ESSlogLEllipt, TrainTimeEllipt             ] = deal(NaN(1,Repeats));
-    [ESSminpCN,    ESSmedianpCN,    ESSmaxpCN,    ESSlogLpCN,    TrainTimepCN,    deltapCN   ] = deal(NaN(1,Repeats));
-    [ESSminpCNL,   ESSmedianpCNL,   ESSmaxpCNL,   ESSlogLpCNL,   TrainTimepCNL,   deltapCNL  ] = deal(NaN(1,Repeats));
-    [ESSminRHMC,   ESSmedianRHMC,   ESSmaxRHMC,   ESSlogLRHMC,   TrainTimeRHMC               ] = deal(NaN(1,Repeats));
-    [ESSminGimala, ESSmedianGimala, ESSmaxGimala, ESSlogLGimala, TrainTimeGimala, deltaGimala] = deal(NaN(1,Repeats));
+    [ESSminMarg,   ESSmedianMarg,   ESSmaxMarg,   ESSlogLMarg,   TrainTimeMarg,   deltaMarg,   accRateMarg  ] = deal(NaN(1,Repeats));
+    [ESSminMALA,   ESSmedianMALA,   ESSmaxMALA,   ESSlogLMALA,   TrainTimeMALA,   deltaMALA,   accRateMALA  ] = deal(NaN(1,Repeats));
+    [ESSminEllipt, ESSmedianEllipt, ESSmaxEllipt, ESSlogLEllipt, TrainTimeEllipt                            ] = deal(NaN(1,Repeats));
+    [ESSminpCN,    ESSmedianpCN,    ESSmaxpCN,    ESSlogLpCN,    TrainTimepCN,    deltapCN,    accRatepCN   ] = deal(NaN(1,Repeats));
+    [ESSminpCNL,   ESSmedianpCNL,   ESSmaxpCNL,   ESSlogLpCNL,   TrainTimepCNL,   deltapCNL,   accRatepCNL  ] = deal(NaN(1,Repeats));
+    [ESSminRHMC,   ESSmedianRHMC,   ESSmaxRHMC,   ESSlogLRHMC,   TrainTimeRHMC                              ] = deal(NaN(1,Repeats));
+    [ESSminGimala, ESSmedianGimala, ESSmaxGimala, ESSlogLGimala, TrainTimeGimala, deltaGimala, accRateGimala] = deal(NaN(1,Repeats));
 
     for rep = 1:Repeats
 
@@ -50,6 +49,7 @@ for i = 1:2
                 ESSlogLMarg(rep)   = summaryMarg{i}.eff_LogL;
                 TrainTimeMarg(rep) = summaryMarg{i}.elapsed;
                 deltaMarg(rep)     = summaryMarg{i}.delta;
+                accRateMarg(rep)   = summaryMarg{i}.accRates.F;
             end
         end
 
@@ -64,6 +64,7 @@ for i = 1:2
                 ESSlogLMALA(rep)   = eff_LogL;
                 TrainTimeMALA(rep) = elapsedTime;
                 deltaMALA(rep)     = delta;
+                accRateMALA(rep)   = accRates.F;
             end
         end
 
@@ -91,6 +92,7 @@ for i = 1:2
                 ESSlogLpCN(rep)   = summarypCN{i}.eff_LogL;
                 TrainTimepCN(rep) = summarypCN{i}.elapsed;
                 deltapCN(rep)     = summarypCN{i}.delta;
+                accRatepCN(rep)   = summarypCN{i}.accRates.F;
             end
         end
 
@@ -105,6 +107,7 @@ for i = 1:2
                 ESSlogLpCNL(rep)   = summarypCNL{i}.eff_LogL;
                 TrainTimepCNL(rep) = summarypCNL{i}.elapsed;
                 deltapCNL(rep)     = summarypCNL{i}.delta;
+                accRatepCNL(rep)   = summarypCNL{i}.accRates.F;
             end
         end
 
@@ -132,129 +135,58 @@ for i = 1:2
                 ESSlogLGimala(rep)   = eff_LogL;
                 TrainTimeGimala(rep) = elapsedTime;
                 deltaGimala(rep)     = delta;
+                accRateGimala(rep)   = accRates.F;
             end
         end
 
-        % --- Log-likelihood trace figures (rep 1, i=1 only) ---
-        if rep == 1 && i == 1
-
-            if exist('logGaussianCoxGirolami_Marg_repeat1.mat','file')
-                load('logGaussianCoxGirolami_Marg_repeat1.mat');
-                if ~(iscell(summaryMarg) && length(summaryMarg) >= 1), continue; end
-                figure; plot(summaryMarg{1}.LogL,'k');
-                ylabel('Log-likelihood','fontsize',fontsz);
-                set(gca,'fontsize',fontsz); axis([1 7000 2150 2250]);
-                title('mGrad'); set(gca,'XTick',[2000 4000 6000]);
-                exportgraphics(gcf,[outdir 'Figure6_marg.pdf'],'Resolution',300);
-            end
-
-            if exist('logGaussianCoxGirolami_Marg_repeat1_Marg_pMALA.mat','file')
-                load('logGaussianCoxGirolami_Marg_repeat1_Marg_pMALA.mat');
-                figure; plot(LogL,'k');
-                ylabel('Log-likelihood','fontsize',fontsz);
-                set(gca,'fontsize',fontsz); axis([1 7000 2150 2250]);
-                title('pMALA'); set(gca,'XTick',[2000 4000 6000]);
-                exportgraphics(gcf,[outdir 'Figure6_mala.pdf'],'Resolution',300);
-            end
-
-            if exist('logGaussianCoxGirolami_Ellipt_repeat1.mat','file')
-                load('logGaussianCoxGirolami_Ellipt_repeat1.mat');
-                if ~(iscell(summaryEllipt) && length(summaryEllipt) >= 1), continue; end
-                figure; plot(summaryEllipt{1}.LogL,'k');
-                set(gca,'fontsize',fontsz); axis([1 7000 2150 2250]);
-                title('Ellipt'); set(gca,'XTick',[2000 4000 6000]);
-                exportgraphics(gcf,[outdir 'Figure6_ellipt.pdf'],'Resolution',300);
-            end
-
-            if exist('logGaussianCoxGirolami_pCN_repeat1.mat','file')
-                load('logGaussianCoxGirolami_pCN_repeat1.mat');
-                if ~(iscell(summarypCN) && length(summarypCN) >= 1), continue; end
-                figure; plot(summarypCN{1}.LogL,'k');
-                set(gca,'fontsize',fontsz); axis([1 7000 2150 2250]);
-                title('pCN'); set(gca,'XTick',[2000 4000 6000]);
-                exportgraphics(gcf,[outdir 'Figure6_pCN.pdf'],'Resolution',300);
-            end
-
-            if exist('logGaussianCoxGirolami_pCNL_repeat1.mat','file')
-                load('logGaussianCoxGirolami_pCNL_repeat1.mat');
-                if ~(iscell(summarypCNL) && length(summarypCNL) >= 1), continue; end
-                figure; plot(summarypCNL{1}.LogL,'k');
-                xlabel('Sampling iteration','fontsize',fontsz);
-                ylabel('Log-likelihood','fontsize',fontsz);
-                set(gca,'fontsize',fontsz); axis([1 7000 2150 2250]);
-                title('pCNL'); set(gca,'XTick',[2000 4000 6000]);
-                exportgraphics(gcf,[outdir 'Figure6_pCNL.pdf'],'Resolution',300);
-            end
-
-            if exist('logGaussianCoxGirolami_RHMC_repeat1_RHMC.mat','file')
-                load('logGaussianCoxGirolami_RHMC_repeat1_RHMC.mat');
-                figure; plot(LogL,'k');
-                ylabel('Log-likelihood','fontsize',fontsz);
-                set(gca,'fontsize',fontsz); axis([1 7000 2150 2250]);
-                title('RHMC'); set(gca,'XTick',[2000 4000 6000]);
-                exportgraphics(gcf,[outdir 'Figure6_RHMC.pdf'],'Resolution',300);
-            end
-
-            if exist('logGaussianCoxGirolami_Marg_repeat1_gimala.mat','file')
-                load('logGaussianCoxGirolami_Marg_repeat1_gimala.mat');
-                figure; plot(LogL,'k');
-                xlabel('Sampling iteration','fontsize',fontsz);
-                ylabel('Log-likelihood','fontsize',fontsz);
-                set(gca,'fontsize',fontsz); axis([1 7000 2150 2250]);
-                title('GI-MALA'); set(gca,'XTick',[2000 4000 6000]);
-                exportgraphics(gcf,[outdir 'Figure6_gimala.pdf'],'Resolution',300);
-            end
-
-        end % rep==1 && i==1
     end % rep loop
 
     % ---- LaTeX table ----
     fid = fopen([outdir tableNames{i} '.txt'],'w');
-    fprintf(fid,'Method &  Time(s) & Step size $\\delta$  &  ESS (Min, Med, Max)  & Min ESS/s (1 st.d.) \\\\ \n');
+    fprintf(fid,'Method &  Time(s) & Acc. (\\%%)  & Step size $\\delta$  &  ESS (Min, Med, Max)  & Min ESS/s (1 st.d.) \\\\ \n');
     fprintf(fid,'\\midrule\n');
 
-    if ~all(isnan(ESSminMarg))
-        fprintf(fid,'mGrad  &  %1.1f  &  %1.3f  &  (%1.1f, %1.1f, %1.1f)  &  %1.2f (%1.2f)\\\\ \n', ...
-            mean(TrainTimeMarg,'omitnan'), mean(deltaMarg,'omitnan'), ...
-            mean(ESSminMarg,'omitnan'), mean(ESSmedianMarg,'omitnan'), mean(ESSmaxMarg,'omitnan'), ...
-            mean(ESSminMarg./TrainTimeMarg,'omitnan'), std(ESSminMarg./TrainTimeMarg,'omitnan'));
+    if ~all(isnan(ESSminGimala))
+        fprintf(fid,'GI-MALA  &  %1.1f  &  %1.1f  &  %1.3f  &  (%1.1f, %1.1f, %1.1f)  &  %1.2f (%1.2f)\\\\ \n', ...
+            mean(TrainTimeGimala,'omitnan'), mean(accRateGimala,'omitnan'), mean(deltaGimala,'omitnan'), ...
+            mean(ESSminGimala,'omitnan'), mean(ESSmedianGimala,'omitnan'), mean(ESSmaxGimala,'omitnan'), ...
+            mean(ESSminGimala./TrainTimeGimala,'omitnan'), std(ESSminGimala./TrainTimeGimala,'omitnan'));
     end
     if ~all(isnan(ESSminMALA))
-        fprintf(fid,'pMALA  &  %1.1f  &  %1.3f  &  (%1.1f, %1.1f, %1.1f)  &  %1.2f (%1.2f)\\\\ \n', ...
-            mean(TrainTimeMALA,'omitnan'), mean(deltaMALA,'omitnan'), ...
+        fprintf(fid,'MALA  &  %1.1f  &  %1.1f  &  %1.3f  &  (%1.1f, %1.1f, %1.1f)  &  %1.2f (%1.2f)\\\\ \n', ...
+            mean(TrainTimeMALA,'omitnan'), mean(accRateMALA,'omitnan'), mean(deltaMALA,'omitnan'), ...
             mean(ESSminMALA,'omitnan'), mean(ESSmedianMALA,'omitnan'), mean(ESSmaxMALA,'omitnan'), ...
             mean(ESSminMALA./TrainTimeMALA,'omitnan'), std(ESSminMALA./TrainTimeMALA,'omitnan'));
     end
+    if ~all(isnan(ESSminMarg))
+        fprintf(fid,'mGrad  &  %1.1f  &  %1.1f  &  %1.3f  &  (%1.1f, %1.1f, %1.1f)  &  %1.2f (%1.2f)\\\\ \n', ...
+            mean(TrainTimeMarg,'omitnan'), mean(accRateMarg,'omitnan'), mean(deltaMarg,'omitnan'), ...
+            mean(ESSminMarg,'omitnan'), mean(ESSmedianMarg,'omitnan'), mean(ESSmaxMarg,'omitnan'), ...
+            mean(ESSminMarg./TrainTimeMarg,'omitnan'), std(ESSminMarg./TrainTimeMarg,'omitnan'));
+    end
     if ~all(isnan(ESSminEllipt))
-        fprintf(fid,'Ellipt  &  %1.1f  &   &  (%1.1f, %1.1f, %1.1f)  &  %1.2f (%1.2f)\\\\ \n', ...
+        fprintf(fid,'Ellipt  &  %1.1f  &   &   &  (%1.1f, %1.1f, %1.1f)  &  %1.2f (%1.2f)\\\\ \n', ...
             mean(TrainTimeEllipt,'omitnan'), ...
             mean(ESSminEllipt,'omitnan'), mean(ESSmedianEllipt,'omitnan'), mean(ESSmaxEllipt,'omitnan'), ...
             mean(ESSminEllipt./TrainTimeEllipt,'omitnan'), std(ESSminEllipt./TrainTimeEllipt,'omitnan'));
     end
     if ~all(isnan(ESSminpCN))
-        fprintf(fid,'pCN  &  %1.1f  &  %1.3f  &  (%1.1f, %1.1f, %1.1f)  &  %1.2f (%1.2f)\\\\ \n', ...
-            mean(TrainTimepCN,'omitnan'), mean(deltapCN,'omitnan'), ...
+        fprintf(fid,'pCN  &  %1.1f  &  %1.1f  &  %1.3f  &  (%1.1f, %1.1f, %1.1f)  &  %1.2f (%1.2f)\\\\ \n', ...
+            mean(TrainTimepCN,'omitnan'), mean(accRatepCN,'omitnan'), mean(deltapCN,'omitnan'), ...
             mean(ESSminpCN,'omitnan'), mean(ESSmedianpCN,'omitnan'), mean(ESSmaxpCN,'omitnan'), ...
             mean(ESSminpCN./TrainTimepCN,'omitnan'), std(ESSminpCN./TrainTimepCN,'omitnan'));
     end
     if ~all(isnan(ESSminpCNL))
-        fprintf(fid,'pCNL  &  %1.1f  &  %1.3f  &  (%1.1f, %1.1f, %1.1f)  &  %1.2f (%1.2f)\\\\ \n', ...
-            mean(TrainTimepCNL,'omitnan'), mean(deltapCNL,'omitnan'), ...
+        fprintf(fid,'pCNL  &  %1.1f  &  %1.1f  &  %1.3f  &  (%1.1f, %1.1f, %1.1f)  &  %1.2f (%1.2f)\\\\ \n', ...
+            mean(TrainTimepCNL,'omitnan'), mean(accRatepCNL,'omitnan'), mean(deltapCNL,'omitnan'), ...
             mean(ESSminpCNL,'omitnan'), mean(ESSmedianpCNL,'omitnan'), mean(ESSmaxpCNL,'omitnan'), ...
             mean(ESSminpCNL./TrainTimepCNL,'omitnan'), std(ESSminpCNL./TrainTimepCNL,'omitnan'));
     end
     if ~all(isnan(ESSminRHMC))
-        fprintf(fid,'RHMC  &  %1.1f  &   &  (%1.1f, %1.1f, %1.1f)  &  %1.2f (%1.2f)\\\\ \n', ...
+        fprintf(fid,'RHMC  &  %1.1f  &   &   &  (%1.1f, %1.1f, %1.1f)  &  %1.2f (%1.2f)\\\\ \n', ...
             mean(TrainTimeRHMC,'omitnan'), ...
             mean(ESSminRHMC,'omitnan'), mean(ESSmedianRHMC,'omitnan'), mean(ESSmaxRHMC,'omitnan'), ...
             mean(ESSminRHMC./TrainTimeRHMC,'omitnan'), std(ESSminRHMC./TrainTimeRHMC,'omitnan'));
-    end
-    fprintf(fid,'\\midrule\n');
-    if ~all(isnan(ESSminGimala))
-        fprintf(fid,'GI-MALA  &  %1.1f  &  %1.3f  &  (%1.1f, %1.1f, %1.1f)  &  %1.2f (%1.2f)\\\\ \n', ...
-            mean(TrainTimeGimala,'omitnan'), mean(deltaGimala,'omitnan'), ...
-            mean(ESSminGimala,'omitnan'), mean(ESSmedianGimala,'omitnan'), mean(ESSmaxGimala,'omitnan'), ...
-            mean(ESSminGimala./TrainTimeGimala,'omitnan'), std(ESSminGimala./TrainTimeGimala,'omitnan'));
     end
     fclose(fid);
     fprintf('Written: %s%s.txt\n', outdir, tableNames{i});

@@ -64,13 +64,13 @@ model.GP.logtheta = [log((32)*b) log(s)];
 model.constraints.kernHyper = 'fixed';
 model.constraints.likHyper = 'fixed';
 model.FF = X(:);
-model.delta = 0.1/sqrt(size(X,1));
+model.delta = 1.0;
 
 mcmcoptions.T = T;
 mcmcoptions.Burnin = 5000;
 mcmcoptions.StoreEvery = 1;
 mcmcoptions.Langevin = 1;
-mcmcoptions.opt =0.82;
+mcmcoptions.opt =0.75;
 
 
 % precompute the inverse covariacne matrix Q
@@ -82,7 +82,7 @@ model.Lambda = diag(model.Lambda);
 
 
    tic;
-   [model samples accRates] = gpsampAuxMarg_fixedhypers_gimala(model, mcmcoptions);
+   [model samples accRates] = gpsampAuxMarg_fixedhypers_gimala_VR(model, mcmcoptions);
    elapsedTime = toc;
 
 

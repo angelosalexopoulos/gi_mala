@@ -38,7 +38,7 @@ if iscolumn(F), F = F'; end
 oldLogLik = sum(loglikHandle(model.Likelihood, Y, F(:)));
 
 % initial grad/curvature and delta_x
-[derF, der2F] = gradloglikHandle(model.Likelihood, model.y, F);
+[derF der2F] = gradloglikHandle(model.Likelihood, model.y, F);
 derF  = ensure_row(derF);
 der2F = ensure_row(der2F);
 delta_x = mean(-(der2F));   % scalar depending on x
@@ -74,7 +74,7 @@ for it = 1:(BurnInIters + Iters)
     newLogLik = sum(loglikHandle(model.Likelihood, Y, Fnew(:)));
 
     % grad/curvature at proposal and delta_y
-    [derFnew, der2Fnew] = gradloglikHandle(model.Likelihood, model.y, Fnew);
+    [derFnew der2Fnew] = gradloglikHandle(model.Likelihood, model.y, Fnew);
     derFnew  = ensure_row(derFnew);
     der2Fnew = ensure_row(der2Fnew);
     delta_y = mean(-(der2Fnew));
@@ -112,7 +112,7 @@ for it = 1:(BurnInIters + Iters)
         accRate = mean(acceptHist((it-49):it)) * 100;
         if it <= BurnInIters
             if (accRate > (100*(opt+range))) || (accRate < (100*(opt-range)))
-                gamma = gamma + (epsilon*((accRate/100 - opt)/opt)) * gamma;
+                gamma = gamma*(1.0 + 0.015*(accRate/100 - opt));
                 model.delta = gamma;
             end
         end

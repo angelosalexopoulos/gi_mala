@@ -16,98 +16,98 @@ library(gridExtra)
 # PURPOSE
 #   Produces Figure 5 for the GI-MALA paper:
 #     Panel 1 (left)  : trace plots of log-likelihood from rep 1
-#                       for all competing methods on the GP
-#                       regression benchmark.
+#                       for all competing methods on the Heart
+#                       GP binary classification benchmark.
 #     Panel 2 (right) : boxplots of the mean log-likelihood
 #                       over 10 independent repetitions.
 #
 # METHODS
-#   GI-MALA, pMALA, mGrad, Ellipt, pCNL, pCN
+#   GI-MALA, pMALA(M), mGrad, Ellipt, pCNL, pCN
+#
+# DATASET
+#   Heart (N = 270, d = 270)  -- change dataset_name below.
+#   Available: 'Australian', 'German', 'Heart', 'Pima', 'Ripley'
+#
+# PRE-REQUISITE
+#   Run patch_logL.m once in MATLAB before running this script.
 #
 # INPUT
-#   results/GPregression/
-#     regression_repeat<r>_gimala.mat
-#     regression_repeat<r>_pMALA.mat
-#     regression_repeat<r>_Marg.mat
-#     regression_repeat<r>_Ellipt.mat
-#     regression_repeat<r>_pCNL.mat
-#     regression_repeat<r>_pCN.mat
+#   results/LogisticRegression_GP/
+#     <Dataset>_repeat<r>_Marg_fixedhypers_gimala.mat
+#     <Dataset>_repeat<r>_Marg_fixedhypers_pMALA.mat
+#     <Dataset>_repeat<r>_Marg_fixedhypers.mat
+#     <Dataset>_repeat<r>_Ellipt_fixedhypers.mat
+#     <Dataset>_repeat<r>_pCNL_fixedhypers.mat
+#     <Dataset>_repeat<r>_pCN_fixedhypers.mat
 #
 # OUTPUT
 #   Figure5.pdf  saved next to this script
 # ============================================================
 
-script_dir  <- tryCatch(
+script_dir   <- tryCatch(
   dirname(normalizePath(sys.frame(1)$ofile)),
   error = function(e) getwd()
 )
-results_dir <- file.path(script_dir, "results", "GPregression")
-fig5_path   <- file.path(script_dir, "Figure5.pdf")
+results_dir  <- file.path(script_dir, "results", "LogisticRegression_GP")
+fig5_path    <- file.path(script_dir, "Figure5.pdf")
 
-Repeats <- 10
-
-# ---- helper: deep-search a named field in nested R.matlab output -----
-find_field <- function(obj, field) {
-  if (is.null(obj)) return(NULL)
-  if (is.list(obj)) {
-    if (!is.null(names(obj)) && field %in% names(obj)) {
-      v <- obj[[field]]
-      while (is.list(v) && length(v) == 1) v <- v[[1]]
-      return(as.vector(v))
-    }
-    for (item in obj) {
-      res <- find_field(item, field)
-      if (!is.null(res)) return(res)
-    }
-  }
-  NULL
-}
+dataset_name <- "Heart"   # <-- change dataset here
+Repeats      <- 10
 
 # ---- method specifications -------------------------------------------
 methods <- list(
-  list(name = "GI-MALA", flat = TRUE,
-       file_fn = function(r)
-         file.path(results_dir, sprintf("regression_repeat%d_gimala.mat", r))),
-  list(name = "pMALA",   flat = TRUE,
-       file_fn = function(r)
-         file.path(results_dir, sprintf("regression_repeat%d_pMALA.mat", r))),
-  list(name = "mGrad",   flat = FALSE, struct_name = "summaryMarg",
-       file_fn = function(r)
-         file.path(results_dir, sprintf("regression_repeat%d_Marg.mat", r))),
-  list(name = "Ellipt",  flat = FALSE, struct_name = "summaryEllipt",
-       file_fn = function(r)
-         file.path(results_dir, sprintf("regression_repeat%d_Ellipt.mat", r))),
-  list(name = "pCNL",    flat = FALSE, struct_name = "summarypCNL",
-       file_fn = function(r)
-         file.path(results_dir, sprintf("regression_repeat%d_pCNL.mat", r))),
-  list(name = "pCN",     flat = FALSE, struct_name = "summarypCN",
-       file_fn = function(r)
-         file.path(results_dir, sprintf("regression_repeat%d_pCN.mat", r)))
+  list(name = "GI-MALA",
+       file_fn = function(ds, r)
+         file.path(results_dir,
+                   sprintf("%s_repeat%d_Marg_fixedhypers_gimala.mat", ds, r))),
+  list(name = "pMALA(M)",
+       file_fn = function(ds, r)
+         file.path(results_dir,
+                   sprintf("%s_repeat%d_Marg_fixedhypers_pMALA.mat", ds, r))),
+  list(name = "mGrad",
+       file_fn = function(ds, r)
+         file.path(results_dir,
+                   sprintf("%s_repeat%d_Marg_fixedhypers.mat", ds, r))),
+  list(name = "Ellipt",
+       file_fn = function(ds, r)
+         file.path(results_dir,
+                   sprintf("%s_repeat%d_Ellipt_fixedhypers.mat", ds, r))),
+  list(name = "pCNL",
+       file_fn = function(ds, r)
+         file.path(results_dir,
+                   sprintf("%s_repeat%d_pCNL_fixedhypers.mat", ds, r))),
+  list(name = "pCN",
+       file_fn = function(ds, r)
+         file.path(results_dir,
+                   sprintf("%s_repeat%d_pCN_fixedhypers.mat", ds, r)))
 )
 
-facet_order <- c("pCN", "pCNL", "Ellipt", "mGrad", "GI-MALA", "pMALA")
+facet_order <- c("pCN", "pCNL", "Ellipt", "mGrad", "GI-MALA", "pMALA(M)")
 
 method_colours <- c(
-  "pCN"     = "#E41A1C",
-  "pCNL"    = "#FF7F00",
-  "Ellipt"  = "#4DAF4A",
-  "mGrad"   = "#00B3B3",
-  "GI-MALA" = "#377EB8",
-  "pMALA"   = "#984EA3"
+  "pCN"       = "#E41A1C",
+  "pCNL"      = "#FF7F00",
+  "Ellipt"    = "#4DAF4A",
+  "mGrad"     = "#00B3B3",
+  "GI-MALA"   = "#377EB8",
+  "pMALA(M)"  = "#984EA3"
 )
 
-# ---- read LogL from a .mat file --------------------------------------
-read_logL <- function(m, rep) {
-  path <- m$file_fn(rep)
+# ---- read LogL -----------------------------------------------------------
+read_logL <- function(m, ds, rep) {
+  path <- m$file_fn(ds, rep)
   if (!file.exists(path)) { warning("File not found: ", path); return(NULL) }
-  mat <- readMat(path)
-  if (m$flat) return(as.vector(mat[["LogL"]]))
-  find_field(mat[[m$struct_name]], "LogL")
+  L <- tryCatch(as.numeric(readMat(path)[["LogL"]]),
+                error = function(e) { warning(basename(path), ": ", e$message); NULL })
+  if (is.null(L) || length(L) == 0) {
+    warning("LogL not found in ", basename(path)); return(NULL)
+  }
+  as.numeric(Re(L))
 }
 
 # ---- trace-plot data frame (rep = 1) ---------------------------------
 trace_list <- lapply(methods, function(m) {
-  logL <- read_logL(m, rep = 1)
+  logL <- read_logL(m, dataset_name, rep = 1)
   if (is.null(logL)) return(NULL)
   data.frame(iter   = seq_along(logL),
              logL   = logL,
@@ -120,7 +120,7 @@ trace_df$method <- factor(trace_df$method, levels = facet_order)
 # ---- boxplot data frame (all reps) -----------------------------------
 box_list <- lapply(methods, function(m) {
   means <- vapply(seq_len(Repeats), function(r) {
-    logL <- read_logL(m, rep = r)
+    logL <- read_logL(m, dataset_name, rep = r)
     if (is.null(logL)) return(NA_real_)
     mean(logL, na.rm = TRUE)
   }, numeric(1))
@@ -129,7 +129,7 @@ box_list <- lapply(methods, function(m) {
 box_df <- do.call(rbind, box_list)
 box_df$method <- factor(box_df$method, levels = facet_order)
 
-# ---- Panel 1: faceted trace plots (2 rows × 3 cols) -----------------
+# ---- Panel 1: faceted trace plots (2 rows x 3 cols) -----------------
 p1 <- ggplot(trace_df, aes(x = iter, y = logL, colour = method)) +
   geom_line(linewidth = 0.35) +
   facet_wrap(~ method, nrow = 2, ncol = 3, scales = "free_y") +

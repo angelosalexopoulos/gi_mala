@@ -39,17 +39,10 @@ mcmcoptions.StoreEvery = 1;
 mcmcoptions.Langevin   = 1;
 mcmcoptions.opt        = 0.574;
 
-% --- Run (retry until acceptance rate in [45%, 65%]) ---
-cond = true;
-while cond
+
     tic;
     [model, samples, accRates] = gpsampAuxMarg_fixedhypers_pMALA(model, mcmcoptions);
     elapsedTime = toc;
-
-    if accRates.F >= 45 && accRates.F <= 65
-        cond = false;
-    end
-end
 
 % --- Save ---
 summaryMarg = summaryStatistics(samples);

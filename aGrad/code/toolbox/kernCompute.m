@@ -58,14 +58,22 @@ switch GPprior.type
     sigmaf = exp(logtheta(2));
     
     if nargin == 3
-      [m,D] = size(Xu);   
-      Knm = -2*Xu*X' + repmat(sum(X.*X,2)',m,1) + repmat(sum(Xu.*Xu,2),1,n);
+      [m,D] = size(Xu); 
+      Knm = -2*X*X' + repmat(sum(X.*X,2)',n,1) + repmat(sum(X.*X,2),1,n);
+      Knm(Knm<0)=0; 
       Knm = Knm.^0.5;
       Knm = sigmaf*exp(-Knm'./(2*exp(logtheta(1))) );
+      %Knm = -2*Xu*X' + repmat(sum(X.*X,2)',m,1) + repmat(sum(Xu.*Xu,2),1,n);
+      %Knm = Knm.^0.5;
+      %Knm = sigmaf*exp(-Knm'./(2*exp(logtheta(1))) );
     else
-      Knm = -2*X*X' + repmat(sum(X.*X,2)',n,1) + repmat(sum(X.*X,2),1,n);
-      Knm = Knm.^0.5;
-      Knm = sigmaf*exp(-Knm'./(2*exp(logtheta(1))) ); 
+        Knm = -2*X*X' + repmat(sum(X.*X,2)',n,1) + repmat(sum(X.*X,2),1,n);
+        Knm(Knm<0)=0; 
+        Knm = Knm.^0.5;
+        Knm = sigmaf*exp(-Knm'./(2*exp(logtheta(1))) );
+      %Knm = -2*X*X' + repmat(sum(X.*X,2)',n,1) + repmat(sum(X.*X,2),1,n);
+      %Knm = abs(Knm).^0.5;
+      %Knm = sigmaf*exp(-Knm'./(2*exp(logtheta(1))) ); 
     end
         
 end  

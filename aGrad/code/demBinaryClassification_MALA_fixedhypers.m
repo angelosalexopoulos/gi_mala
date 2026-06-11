@@ -1,7 +1,7 @@
 function demBinaryClassification_MALA_fixedhypers(rep)
 
-addpath toolbox/; 
-addpath ../data/;
+addpath aGrad/code/toolbox/; 
+addpath aGrad/data/;
 %addpath ../../../Software/RHMC_GirolamiCalderhead/Bayes_Log_Reg/MCMC/Data/
 precondition = 'yes'; % 'yes' or 'no'
 
@@ -134,6 +134,6 @@ for dataName = {'Australian' 'German' 'Heart' 'Pima' 'Ripley'}% 'Caravan'}
    summaryMALA.delta = model.delta; 
    summaryMALA.eff_LogL = mcmc_ess(samples.LogL(mcmcoptions.Burnin+1:end));
 
-   save(['../results/' dataName{1} '_repeat' num2str(rep) '_MALA_fixedhypers.mat'], 'summaryMALA');
+   save(['results/' dataName{1} '_repeat' num2str(rep) '_MALA_fixedhypers.mat'], 'summaryMALA');
 %    
 end

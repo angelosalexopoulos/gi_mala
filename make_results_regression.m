@@ -18,12 +18,12 @@ addpath results/GPregression/;
 
 Repeats = 10;
 
-[ESSminMarg,   ESSmedianMarg,   ESSmaxMarg,   ESSlogLMarg,   TrainTimeMarg,   deltaMarg  ] = deal(NaN(1,Repeats));
-[ESSminMALA,   ESSmedianMALA,   ESSmaxMALA,   ESSlogLMALA,   TrainTimeMALA,   deltaMALA  ] = deal(NaN(1,Repeats));
-[ESSminEllipt, ESSmedianEllipt, ESSmaxEllipt, ESSlogLEllipt, TrainTimeEllipt             ] = deal(NaN(1,Repeats));
-[ESSminpCN,    ESSmedianpCN,    ESSmaxpCN,    ESSlogLpCN,    TrainTimepCN,    deltapCN   ] = deal(NaN(1,Repeats));
-[ESSminpCNL,   ESSmedianpCNL,   ESSmaxpCNL,   ESSlogLpCNL,   TrainTimepCNL,   deltapCNL  ] = deal(NaN(1,Repeats));
-[ESSminGimala, ESSmedianGimala, ESSmaxGimala, ESSlogLGimala, TrainTimeGimala, deltaGimala] = deal(NaN(1,Repeats));
+[ESSminMarg,   ESSmedianMarg,   ESSmaxMarg,   ESSlogLMarg,   TrainTimeMarg,   deltaMarg,   accRateMarg  ] = deal(NaN(1,Repeats));
+[ESSminMALA,   ESSmedianMALA,   ESSmaxMALA,   ESSlogLMALA,   TrainTimeMALA,   deltaMALA,   accRateMALA  ] = deal(NaN(1,Repeats));
+[ESSminEllipt, ESSmedianEllipt, ESSmaxEllipt, ESSlogLEllipt, TrainTimeEllipt                            ] = deal(NaN(1,Repeats));
+[ESSminpCN,    ESSmedianpCN,    ESSmaxpCN,    ESSlogLpCN,    TrainTimepCN,    deltapCN,    accRatepCN   ] = deal(NaN(1,Repeats));
+[ESSminpCNL,   ESSmedianpCNL,   ESSmaxpCNL,   ESSlogLpCNL,   TrainTimepCNL,   deltapCNL,   accRatepCNL  ] = deal(NaN(1,Repeats));
+[ESSminGimala, ESSmedianGimala, ESSmaxGimala, ESSlogLGimala, TrainTimeGimala, deltaGimala, accRateGimala] = deal(NaN(1,Repeats));
 
 for rep = 1:Repeats
 
@@ -37,6 +37,7 @@ for rep = 1:Repeats
         ESSlogLMarg(rep)   = summaryMarg.eff_LogL;
         TrainTimeMarg(rep) = summaryMarg.elapsed;
         deltaMarg(rep)     = summaryMarg.delta;
+        accRateMarg(rep)   = summaryMarg.accRates.F;
     end
 
     % --- pMALA ---
@@ -49,6 +50,7 @@ for rep = 1:Repeats
         ESSlogLMALA(rep)   = eff_LogL;
         TrainTimeMALA(rep) = elapsedTime;
         deltaMALA(rep)     = delta;
+        accRateMALA(rep)   = accRates.F;
     end
 
     % --- Ellipt ---
@@ -72,6 +74,7 @@ for rep = 1:Repeats
         ESSlogLpCN(rep)   = summarypCN.eff_LogL;
         TrainTimepCN(rep) = summarypCN.elapsed;
         deltapCN(rep)     = summarypCN.delta;
+        accRatepCN(rep)   = summarypCN.accRates.F;
     end
 
     % --- pCNL ---
@@ -84,6 +87,7 @@ for rep = 1:Repeats
         ESSlogLpCNL(rep)   = summarypCNL.eff_LogL;
         TrainTimepCNL(rep) = summarypCNL.elapsed;
         deltapCNL(rep)     = summarypCNL.delta;
+        accRatepCNL(rep)   = summarypCNL.accRates.F;
     end
 
     % --- GI-MALA ---
@@ -96,51 +100,51 @@ for rep = 1:Repeats
         ESSlogLGimala(rep)   = eff_LogL;
         TrainTimeGimala(rep) = elapsedTime;
         deltaGimala(rep)     = delta;
+        accRateGimala(rep)   = accRates.F;
     end
 
 end
 
 % ---- LaTeX table ----
 fid = fopen([outdir 'Table15.txt'],'w');
-fprintf(fid,' Method &  Time(s) & Step size $\\delta$  &  ESS (Min, Med, Max)  & Min ESS/s (1 st.d.) \\\\ \n');
+fprintf(fid,' Method &  Time(s) & Acc. (\\%%)  & Step size $\\delta$  &  ESS (Min, Med, Max)  & Min ESS/s (1 st.d.) \\\\ \n');
 fprintf(fid,'\\midrule\n');
 
-if ~all(isnan(ESSminMarg))
-    fprintf(fid,'mGrad  &  %1.1f  &  %1.3f  &  (%1.1f, %1.1f, %1.1f)  &  %1.2f (%1.2f)\\\\ \n', ...
-        mean(TrainTimeMarg,'omitnan'), mean(deltaMarg,'omitnan'), ...
-        mean(ESSminMarg,'omitnan'), mean(ESSmedianMarg,'omitnan'), mean(ESSmaxMarg,'omitnan'), ...
-        mean(ESSminMarg./TrainTimeMarg,'omitnan'), std(ESSminMarg./TrainTimeMarg,'omitnan'));
+if ~all(isnan(ESSminGimala))
+    fprintf(fid,'GI-MALA  &  %1.1f  &  %1.1f  &  %1.3f  &  (%1.1f, %1.1f, %1.1f)  &  %1.2f (%1.2f)\\\\ \n', ...
+        mean(TrainTimeGimala,'omitnan'), mean(accRateGimala,'omitnan'), mean(deltaGimala,'omitnan'), ...
+        mean(ESSminGimala,'omitnan'), mean(ESSmedianGimala,'omitnan'), mean(ESSmaxGimala,'omitnan'), ...
+        mean(ESSminGimala./TrainTimeGimala,'omitnan'), std(ESSminGimala./TrainTimeGimala,'omitnan'));
 end
 if ~all(isnan(ESSminMALA))
-    fprintf(fid,'pMALA  &  %1.1f  &  %1.3f  &  (%1.1f, %1.1f, %1.1f)  &  %1.2f (%1.2f)\\\\ \n', ...
-        mean(TrainTimeMALA,'omitnan'), mean(deltaMALA,'omitnan'), ...
+    fprintf(fid,'MALA  &  %1.1f  &  %1.1f  &  %1.3f  &  (%1.1f, %1.1f, %1.1f)  &  %1.2f (%1.2f)\\\\ \n', ...
+        mean(TrainTimeMALA,'omitnan'), mean(accRateMALA,'omitnan'), mean(deltaMALA,'omitnan'), ...
         mean(ESSminMALA,'omitnan'), mean(ESSmedianMALA,'omitnan'), mean(ESSmaxMALA,'omitnan'), ...
         mean(ESSminMALA./TrainTimeMALA,'omitnan'), std(ESSminMALA./TrainTimeMALA,'omitnan'));
 end
+if ~all(isnan(ESSminMarg))
+    fprintf(fid,'mGrad  &  %1.1f  &  %1.1f  &  %1.3f  &  (%1.1f, %1.1f, %1.1f)  &  %1.2f (%1.2f)\\\\ \n', ...
+        mean(TrainTimeMarg,'omitnan'), mean(accRateMarg,'omitnan'), mean(deltaMarg,'omitnan'), ...
+        mean(ESSminMarg,'omitnan'), mean(ESSmedianMarg,'omitnan'), mean(ESSmaxMarg,'omitnan'), ...
+        mean(ESSminMarg./TrainTimeMarg,'omitnan'), std(ESSminMarg./TrainTimeMarg,'omitnan'));
+end
 if ~all(isnan(ESSminEllipt))
-    fprintf(fid,'Ellipt  &  %1.1f  &   &  (%1.1f, %1.1f, %1.1f)  &  %1.2f (%1.2f)\\\\ \n', ...
+    fprintf(fid,'Ellipt  &  %1.1f  &   &   &  (%1.1f, %1.1f, %1.1f)  &  %1.2f (%1.2f)\\\\ \n', ...
         mean(TrainTimeEllipt,'omitnan'), ...
         mean(ESSminEllipt,'omitnan'), mean(ESSmedianEllipt,'omitnan'), mean(ESSmaxEllipt,'omitnan'), ...
         mean(ESSminEllipt./TrainTimeEllipt,'omitnan'), std(ESSminEllipt./TrainTimeEllipt,'omitnan'));
 end
 if ~all(isnan(ESSminpCN))
-    fprintf(fid,'pCN  &  %1.1f  &  %1.3f  &  (%1.1f, %1.1f, %1.1f)  &  %1.2f (%1.2f)\\\\ \n', ...
-        mean(TrainTimepCN,'omitnan'), mean(deltapCN,'omitnan'), ...
+    fprintf(fid,'pCN  &  %1.1f  &  %1.1f  &  %1.3f  &  (%1.1f, %1.1f, %1.1f)  &  %1.2f (%1.2f)\\\\ \n', ...
+        mean(TrainTimepCN,'omitnan'), mean(accRatepCN,'omitnan'), mean(deltapCN,'omitnan'), ...
         mean(ESSminpCN,'omitnan'), mean(ESSmedianpCN,'omitnan'), mean(ESSmaxpCN,'omitnan'), ...
         mean(ESSminpCN./TrainTimepCN,'omitnan'), std(ESSminpCN./TrainTimepCN,'omitnan'));
 end
 if ~all(isnan(ESSminpCNL))
-    fprintf(fid,'pCNL  &  %1.1f  &  %1.3f  &  (%1.1f, %1.1f, %1.1f)  &  %1.2f (%1.2f)\\\\ \n', ...
-        mean(TrainTimepCNL,'omitnan'), mean(deltapCNL,'omitnan'), ...
+    fprintf(fid,'pCNL  &  %1.1f  &  %1.1f  &  %1.3f  &  (%1.1f, %1.1f, %1.1f)  &  %1.2f (%1.2f)\\\\ \n', ...
+        mean(TrainTimepCNL,'omitnan'), mean(accRatepCNL,'omitnan'), mean(deltapCNL,'omitnan'), ...
         mean(ESSminpCNL,'omitnan'), mean(ESSmedianpCNL,'omitnan'), mean(ESSmaxpCNL,'omitnan'), ...
         mean(ESSminpCNL./TrainTimepCNL,'omitnan'), std(ESSminpCNL./TrainTimepCNL,'omitnan'));
-end
-fprintf(fid,'\\midrule\n');
-if ~all(isnan(ESSminGimala))
-    fprintf(fid,'GI-MALA  &  %1.1f  &  %1.3f  &  (%1.1f, %1.1f, %1.1f)  &  %1.2f (%1.2f)\\\\ \n', ...
-        mean(TrainTimeGimala,'omitnan'), mean(deltaGimala,'omitnan'), ...
-        mean(ESSminGimala,'omitnan'), mean(ESSmedianGimala,'omitnan'), mean(ESSmaxGimala,'omitnan'), ...
-        mean(ESSminGimala./TrainTimeGimala,'omitnan'), std(ESSminGimala./TrainTimeGimala,'omitnan'));
 end
 fclose(fid);
 fprintf('Written: %sTable15.txt\n', outdir);

@@ -41,7 +41,7 @@ script_dir <- tryCatch(
 #   ggplot2 (>= 3.4.0)
 # ============================================================
 
-set.seed(121088)
+set.seed(1234)
 
 # ------------------------------------------------------------------
 # Numerically stable log(Phi(z))
@@ -94,41 +94,44 @@ mala_t <- function(n_samples, nu, gam_gi, x0 = 0, N = 5, b) {
     log_alpha <- (log_p_xp + log_q_x_xp) - (log_p_x + log_q_xp_x)
     acc_ratio <- min(1, max(0, if (log_alpha >= 0) 1 else
                                 if (log_alpha < -700) 0 else exp(log_alpha)))
-
+    
+    
+    # --- Control variates (N-term Poisson approximation) ---
+    beta_pow  <- beta^idx_N
+    beta_pow2 <- beta_pow^2
+    
+    vPhi2 <- precond * (1 - beta_pow2)
+    vPhi  <- sqrt(pmax(vPhi2, .Machine$double.eps))
+    
+    z_Gx <- (beta_pow * x      - b) / vPhi
+    z_Gy <- (beta_pow * x_prop - b) / vPhi
+    Gx   <- as.numeric(x      > b) + sum(exp(log_pnorm(z_Gx)))
+    Gy   <- as.numeric(x_prop > b) + sum(exp(log_pnorm(z_Gy)))
+    
+    muq     <- x + gam_gi * precond * grad
+    s2q     <- pmax(precond * prop_var, .Machine$double.eps)
+    sqrt_sq <- sqrt(s2q)
+    
+    Eqa   <- exp(log_pnorm((muq - b) / sqrt_sq))
+    denom <- sqrt(pmax(vPhi2 + beta_pow2 * s2q, .Machine$double.eps))
+    Eqb   <- sum(exp(log_pnorm((beta_pow * muq - b) / denom)))
+    
+    H1[i] <- acc_ratio * (Gy - Gx)
+    H2[i] <- Gy - Eqa - Eqb
+    
+    Kn[1, 1] <- Kn[1, 1] + H1[i]^2
+    Kn[1, 2] <- Kn[1, 2] + H1[i] * H2[i]
+    Kn[2, 1] <- Kn[2, 1] + H2[i] * H1[i]
+    Kn[2, 2] <- Kn[2, 2] + H2[i]^2
+    samples[i] <- x
+    
     if (log(runif(1)) < log_alpha) {
       x    <- x_prop
       grad <- grad_prop
       accept_count <- accept_count + 1
     }
-    samples[i] <- x
+   
 
-    # --- Control variates (N-term Poisson approximation) ---
-    beta_pow  <- beta^idx_N
-    beta_pow2 <- beta_pow^2
-
-    vPhi2 <- precond * (1 - beta_pow2)
-    vPhi  <- sqrt(pmax(vPhi2, .Machine$double.eps))
-
-    z_Gx <- (beta_pow * x      - b) / vPhi
-    z_Gy <- (beta_pow * x_prop - b) / vPhi
-    Gx   <- as.numeric(x      > b) + sum(exp(log_pnorm(z_Gx)))
-    Gy   <- as.numeric(x_prop > b) + sum(exp(log_pnorm(z_Gy)))
-
-    muq     <- x + gam_gi * precond * grad
-    s2q     <- pmax(precond * prop_var, .Machine$double.eps)
-    sqrt_sq <- sqrt(s2q)
-
-    Eqa   <- exp(log_pnorm((muq - b) / sqrt_sq))
-    denom <- sqrt(pmax(vPhi2 + beta_pow2 * s2q, .Machine$double.eps))
-    Eqb   <- sum(exp(log_pnorm((beta_pow * muq - b) / denom)))
-
-    H1[i] <- acc_ratio * (Gy - Gx)
-    H2[i] <- Gy - Eqa - Eqb
-
-    Kn[1, 1] <- Kn[1, 1] + H1[i]^2
-    Kn[1, 2] <- Kn[1, 2] + H1[i] * H2[i]
-    Kn[2, 1] <- Kn[2, 1] + H2[i] * H1[i]
-    Kn[2, 2] <- Kn[2, 2] + H2[i]^2
   }
 
   list(samples = samples, H1 = H1, H2 = H2,

@@ -11,8 +11,9 @@ addpath aGrad/code/toolbox/;
 addpath aGrad/data/;
 addpath aGrad/;
 
-randn('state', sum(clock) );
-rand('twister', sum(clock) );
+% Note: RNG seeding is inherited from the caller (run_all_experiments.m sets
+% randn('seed',1210); rand('seed',1210)) so RHMC is reproducible under the same
+% setting as the other samplers. Do not reseed from the clock here.
 
 % Grid Size
 N     = 64;

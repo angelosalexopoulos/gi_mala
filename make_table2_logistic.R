@@ -31,7 +31,7 @@ library(coda)
 data_dir <- "/Users/angelos/Desktop/vr_pCN/data"   # <-- edit if needed
 out_file <- "table2_logistic.tex"
 
-set.seed(121088)
+set.seed(1234)
 
 its    <- 10000
 Burnin <- 5000
@@ -53,7 +53,7 @@ log_sigmoid <- function(x) {
 }
 
 run_chain <- function(myX, Y, its, Burnin, pMALA, seed_offset = 0) {
-  set.seed(121088 + seed_offset)
+  set.seed(1234 + seed_offset)
   d  <- ncol(myX)
   tY <- 2 * Y - 1
 

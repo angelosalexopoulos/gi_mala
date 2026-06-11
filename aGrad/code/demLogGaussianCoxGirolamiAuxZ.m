@@ -1,14 +1,15 @@
 function demLogGaussianCoxGirolamiAuxZ(rep)
 
-addpath toolbox/; 
- 
+addpath aGrad/code/toolbox/;
+addpath aGrad/data/;
+
 dataName = 'logGaussianCoxGirolami_AuxZ';
 storeRes = 1;
 
 for ds=[2 1]
 %load the data
 % Hyperparameters of model
-load ../data/TestData64;
+load TestData64;
 N = 64;
 s = 1.91;
 b = 1/33;
@@ -82,9 +83,9 @@ end
 if storeRes == 1 
     % don't store samples and model for more than one repeats
     if rep == 1
-       save(['../results/' dataName '_repeat' num2str(rep) '.mat'], 'summaryAuxZ', 'model', 'samples');
+       save(['results/Cox_regression/' dataName '_repeat' num2str(rep) '.mat'], 'summaryAuxZ', 'model', 'samples');
     else
-       save(['../results/' dataName '_repeat' num2str(rep) '.mat'], 'summaryAuxZ');
+       save(['results/Cox_regression/' dataName '_repeat' num2str(rep) '.mat'], 'summaryAuxZ');
     end
 end
 

@@ -55,7 +55,7 @@ model.GP.logtheta = [log((32)*b) log(s)];
 %model.GP.logtheta = [0 0];
 model.constraints.kernHyper = 'fixed';
 model.constraints.likHyper = 'fixed';
-model.FF = X(:); 
+model.FF = X(:);
 
 mcmcoptions.T = 5000;
 mcmcoptions.Burnin = 5000;
@@ -69,16 +69,11 @@ model.Lambda = diag(model.Lambda);
 %model.L = L;
 model.L = diag(model.Lambda.^0.5)*(model.U');
 
-% Repeat until post-burnin acceptance rate is within [20, 30]% (target 25%)
-cond = true;
-while cond
+
     tic;
     [model samples accRates] = gpsamppCN_fixedhypers(model, mcmcoptions);
     elapsedTime = toc;
-    if accRates.F > 20 && accRates.F < 30
-        cond = false;
-    end
-end
+
 samples.F = real(samples.F);
 samples.LogL = real(samples.LogL);
 % compute statistics
@@ -88,15 +83,16 @@ summarypCN{ds}.accRates = accRates;
 summarypCN{ds}.delta = model.delta; 
 summarypCN{ds}.beta = model.beta; 
 summarypCN{ds}.eff_LogL = mcmc_ess(samples.LogL(mcmcoptions.Burnin+1:end));
+LogL = samples.LogL(mcmcoptions.Burnin+1:end);
 
 %end
 
 if storeRes == 1
     % don't store samples and model for more than one repeats
     if rep == 1
-       save(['results/Cox_regression/' dataName '_repeat' num2str(rep) '.mat'], 'summarypCN', 'model', 'samples');
+       save(['results/Cox_regression/' dataName '_repeat' num2str(rep) '.mat'], 'summarypCN', 'LogL', 'model', 'samples');
     else
-       save(['results/Cox_regression/' dataName '_repeat' num2str(rep) '.mat'], 'summarypCN');
+       save(['results/Cox_regression/' dataName '_repeat' num2str(rep) '.mat'], 'summarypCN', 'LogL');
     end
 end
 

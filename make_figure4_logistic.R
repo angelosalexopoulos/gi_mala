@@ -28,6 +28,11 @@ library(gridExtra)
 #   Heart (N = 270, d = 270)  -- change dataset_name below.
 #   Available: 'Australian', 'German', 'Heart', 'Pima', 'Ripley'
 #
+# PRE-REQUISITE
+#   Run patch_logL.py once before running this script.
+#   All .mat files will then have a flat top-level 'LogL' variable
+#   (5000 post-burnin samples) readable by R.matlab.
+#
 # INPUT
 #   results/LogisticRegression_GP/
 #     <Dataset>_repeat<r>_Marg_fixedhypers_gimala.mat
@@ -48,64 +53,39 @@ script_dir   <- tryCatch(
 results_dir  <- file.path(script_dir, "results", "LogisticRegression_GP")
 fig4_path    <- file.path(script_dir, "Figure4.pdf")
 
-dataset_name <- "Heart"   # <-- change dataset here
+dataset_name <- "Australian"   # <-- change dataset here
 Repeats      <- 10
 
-# ---- helper: deep-search a named field in nested R.matlab output -----
-find_field <- function(obj, field) {
-  if (is.null(obj)) return(NULL)
-  if (is.list(obj)) {
-    if (!is.null(names(obj)) && field %in% names(obj)) {
-      v <- obj[[field]]
-      while (is.list(v) && length(v) == 1) v <- v[[1]]
-      return(as.vector(v))
-    }
-    for (item in obj) {
-      res <- find_field(item, field)
-      if (!is.null(res)) return(res)
-    }
-  }
-  NULL
-}
-
 # ---- method specifications -------------------------------------------
-#   name      : display label
-#   file_fn   : function(dataset, rep) -> file name
-#   flat      : TRUE  -> LogL stored as flat variable in the .mat file
-#               FALSE -> LogL inside struct named struct_name
-#   struct_name: name of the struct variable (if flat = FALSE)
-
 methods <- list(
-  list(name = "GI-MALA",  flat = TRUE,
+  list(name = "GI-MALA",
        file_fn = function(ds, r)
          file.path(results_dir,
                    sprintf("%s_repeat%d_Marg_fixedhypers_gimala.mat", ds, r))),
-  list(name = "pMALA(M)", flat = TRUE,
+  list(name = "pMALA(M)",
        file_fn = function(ds, r)
          file.path(results_dir,
                    sprintf("%s_repeat%d_Marg_fixedhypers_pMALA.mat", ds, r))),
-  list(name = "mGrad",    flat = FALSE, struct_name = "summaryMarg",
+  list(name = "mGrad",
        file_fn = function(ds, r)
          file.path(results_dir,
                    sprintf("%s_repeat%d_Marg_fixedhypers.mat", ds, r))),
-  list(name = "Ellipt",   flat = FALSE, struct_name = "summaryEllipt",
+  list(name = "Ellipt",
        file_fn = function(ds, r)
          file.path(results_dir,
                    sprintf("%s_repeat%d_Ellipt_fixedhypers.mat", ds, r))),
-  list(name = "pCNL",     flat = FALSE, struct_name = "summarypCNL",
+  list(name = "pCNL",
        file_fn = function(ds, r)
          file.path(results_dir,
                    sprintf("%s_repeat%d_pCNL_fixedhypers.mat", ds, r))),
-  list(name = "pCN",      flat = FALSE, struct_name = "summarypCN",
+  list(name = "pCN",
        file_fn = function(ds, r)
          file.path(results_dir,
                    sprintf("%s_repeat%d_pCN_fixedhypers.mat", ds, r)))
 )
 
-# Facet order: top row left-to-right, bottom row left-to-right
 facet_order <- c("pCN", "pCNL", "Ellipt", "mGrad", "GI-MALA", "pMALA(M)")
 
-# One distinct colour per method (matches left-to-right, top-to-bottom order)
 method_colours <- c(
   "pCN"       = "#E41A1C",
   "pCNL"      = "#FF7F00",
@@ -115,13 +95,17 @@ method_colours <- c(
   "pMALA(M)"  = "#984EA3"
 )
 
-# ---- read LogL from a .mat file --------------------------------------
+# ---- read LogL -----------------------------------------------------------
+# All files have a flat top-level 'LogL' after running patch_logL.py.
 read_logL <- function(m, ds, rep) {
   path <- m$file_fn(ds, rep)
   if (!file.exists(path)) { warning("File not found: ", path); return(NULL) }
-  mat <- readMat(path)
-  if (m$flat) return(as.vector(mat[["LogL"]]))
-  find_field(mat[[m$struct_name]], "LogL")
+  L <- tryCatch(as.numeric(readMat(path)[["LogL"]]),
+                error = function(e) { warning(basename(path), ": ", e$message); NULL })
+  if (is.null(L) || length(L) == 0) {
+    warning("LogL not found in ", basename(path)); return(NULL)
+  }
+  as.numeric(Re(L))
 }
 
 # ---- trace-plot data frame (rep = 1) ---------------------------------
@@ -148,7 +132,7 @@ box_list <- lapply(methods, function(m) {
 box_df <- do.call(rbind, box_list)
 box_df$method <- factor(box_df$method, levels = facet_order)
 
-# ---- Panel 1: faceted trace plots (2 rows × 3 cols) -----------------
+# ---- Panel 1: faceted trace plots (2 rows x 3 cols) -----------------
 p1 <- ggplot(trace_df, aes(x = iter, y = logL, colour = method)) +
   geom_line(linewidth = 0.35) +
   facet_wrap(~ method, nrow = 2, ncol = 3, scales = "free_y") +

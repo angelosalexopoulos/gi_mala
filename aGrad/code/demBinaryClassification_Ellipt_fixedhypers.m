@@ -124,7 +124,8 @@ for dataName = {'Australian' 'German' 'Heart' 'Pima' 'Ripley'}% 'Caravan'}
    summaryEllipt = summaryStatistics(samples);
    summaryEllipt.elapsed = elapsedTime;
    summaryEllipt.eff_LogL = mcmc_ess(samples.LogL(mcmcoptions.Burnin+1:end));
+   LogL = samples.LogL(mcmcoptions.Burnin+1:end);
 
-   save(['results/LogisticRegression_GP/' dataName{1} '_repeat' num2str(rep) '_Ellipt_fixedhypers.mat'], 'summaryEllipt');   
+   save(['results/LogisticRegression_GP/' dataName{1} '_repeat' num2str(rep) '_Ellipt_fixedhypers.mat'], 'summaryEllipt', 'LogL');   
 %    
 end

@@ -129,7 +129,6 @@ means_cv = zeros(1, n);
    
    model.constraints.kernHyper = 'free';
    model.constraints.likHyper = 'free';
-   model.delta =2/sqrt(size(X,1));
    mcmcoptions.T = 5000;
    mcmcoptions.Burnin = 5000;
    mcmcoptions.StoreEvery = 1;
@@ -145,16 +144,9 @@ means_cv = zeros(1, n);
 
 
    % Repeat until post-burnin acceptance rate is within [70, 80]% (target 75%)
-   cond = true;
-   while cond
        tic;
        [model, samples, accRates] = gpsampAuxMarg_fixedhypers_gimala(model, mcmcoptions);
        elapsedTime = toc;
-       if accRates.F > 70 && accRates.F < 80
-           cond = false;
-       end
-   end
-
 
 
 %ess comparisons

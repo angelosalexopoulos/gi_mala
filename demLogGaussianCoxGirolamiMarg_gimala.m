@@ -76,13 +76,13 @@ model.GP.logtheta = [log((32)*b) log(s)];
 model.constraints.kernHyper = 'fixed';
 model.constraints.likHyper = 'fixed';
 model.FF = X(:);
-model.delta = 0.1/sqrt(size(X,1));
+%model.delta = 0.001;
 
 mcmcoptions.T = 5000;
 mcmcoptions.Burnin = 5000;
 mcmcoptions.StoreEvery = 1;
 mcmcoptions.Langevin = 1;
-mcmcoptions.opt =0.82;
+mcmcoptions.opt =0.75;
 
 
 % precompute the inverse covariacne matrix Q
@@ -91,18 +91,10 @@ model.K = kernCompute(model.GP, model.X);
 model.U = real(model.U);
 model.Lambda = diag(model.Lambda);
 
-
-
-   % Repeat until post-burnin acceptance rate is within [70, 80]% (target 75%)
-   cond = true;
-   while cond
        tic;
        [model samples accRates] = gpsampAuxMarg_fixedhypers_gimala(model, mcmcoptions);
        elapsedTime = toc;
-       if accRates.F > 70 && accRates.F < 80
-           cond = false;
-       end
-   end
+
 
  % compute statistics
    summaryMarg = summaryStatistics(samples);

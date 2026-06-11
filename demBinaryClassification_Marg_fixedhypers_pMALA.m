@@ -120,18 +120,9 @@ for dataName = {'Australian' 'German' 'Heart' 'Pima' 'Ripley'}% 'Caravan'}
    model.Lambda = diag(model.Lambda);
 
 
-
-   % Repeat until post-burnin acceptance rate is within [52, 62]% (target 57.4%)
-   cond = true;
-   while cond
        tic;
        [model samples accRates] = gpsampAuxMarg_fixedhypers_pMALA(model, mcmcoptions);
        elapsedTime = toc;
-       if accRates.F > 52 && accRates.F < 62
-           cond = false;
-       end
-   end
-
 
 
  % compute statistics 

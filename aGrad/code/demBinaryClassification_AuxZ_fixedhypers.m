@@ -1,7 +1,7 @@
 function  demBinaryClassification_AuxZ_fixedhypers(rep)
 
-addpath toolbox/; 
-addpath ../data/;
+addpath aGrad/code/toolbox/; 
+addpath aGrad/data/;
 %addpath ../../../Software/RHMC_GirolamiCalderhead/Bayes_Log_Reg/MCMC/Data/
 
 for dataName = {'Australian' 'German' 'Heart' 'Pima' 'Ripley'}% 'Caravan'}
@@ -125,6 +125,6 @@ for dataName = {'Australian' 'German' 'Heart' 'Pima' 'Ripley'}% 'Caravan'}
    summaryAuxZ.delta = model.delta; 
    summaryAuxZ.eff_LogL = mcmc_ess(samples.LogL(mcmcoptions.Burnin+1:end));
    
-   save(['../results/' dataName{1} '_repeat' num2str(rep) '_AuxZ_fixedhypers.mat'], 'summaryAuxZ');
+   save(['results/' dataName{1} '_repeat' num2str(rep) '_AuxZ_fixedhypers.mat'], 'summaryAuxZ');
 %    
 end

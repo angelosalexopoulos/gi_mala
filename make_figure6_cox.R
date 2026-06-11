@@ -17,26 +17,24 @@ library(gridExtra)
 #   Produces Figure 6 for the GI-MALA paper:
 #     Panel 1 (left)  : trace plots of log-likelihood from rep 1
 #                       for all competing methods on the
-#                       Log-Gaussian Cox process (64×64 grid).
+#                       Log-Gaussian Cox process (64x64 grid).
 #     Panel 2 (right) : boxplots of the mean log-likelihood
 #                       over 10 independent repetitions.
 #
 # METHODS
 #   GI-MALA, pMALA(M), mGrad, Ellipt, pCNL, pCN
 #
+# PRE-REQUISITE
+#   Run patch_logL.py once before running this script.
+#
 # INPUT
 #   results/Cox_regression/
 #     logGaussianCoxGirolami_Marg_repeat<r>_gimala.mat
 #     logGaussianCoxGirolami_Marg_repeat<r>_Marg_pMALA.mat
-#     logGaussianCoxGirolami_Marg_repeat<r>.mat        (mGrad,  cell array)
-#     logGaussianCoxGirolami_Ellipt_repeat<r>.mat      (Ellipt, cell array)
-#     logGaussianCoxGirolami_pCNL_repeat<r>.mat        (pCNL,  cell array)
-#     logGaussianCoxGirolami_pCN_repeat<r>.mat         (pCN,   cell array)
-#
-# NOTE
-#   The mGrad/Ellipt/pCN/pCNL files save results inside a MATLAB
-#   cell array ({1} indexed).  The find_field() helper handles
-#   both scalar-struct and cell-of-struct layouts automatically.
+#     logGaussianCoxGirolami_Marg_repeat<r>.mat
+#     logGaussianCoxGirolami_Ellipt_repeat<r>.mat
+#     logGaussianCoxGirolami_pCNL_repeat<r>.mat
+#     logGaussianCoxGirolami_pCN_repeat<r>.mat
 #
 # OUTPUT
 #   Figure6.pdf  saved next to this script
@@ -51,48 +49,29 @@ fig6_path   <- file.path(script_dir, "Figure6.pdf")
 
 Repeats <- 10
 
-# ---- helper: deep-search a named field in nested R.matlab output -----
-find_field <- function(obj, field) {
-  if (is.null(obj)) return(NULL)
-  if (is.list(obj)) {
-    if (!is.null(names(obj)) && field %in% names(obj)) {
-      v <- obj[[field]]
-      while (is.list(v) && length(v) == 1) v <- v[[1]]
-      return(as.vector(v))
-    }
-    for (item in obj) {
-      res <- find_field(item, field)
-      if (!is.null(res)) return(res)
-    }
-  }
-  NULL
-}
-
 # ---- method specifications -------------------------------------------
-#   flat = TRUE  : LogL stored as a top-level variable in the .mat file
-#   flat = FALSE : LogL inside struct_name (scalar struct or cell{1})
 methods <- list(
-  list(name = "GI-MALA",  flat = TRUE,
+  list(name = "GI-MALA",
        file_fn = function(r)
          file.path(results_dir,
            sprintf("logGaussianCoxGirolami_Marg_repeat%d_gimala.mat", r))),
-  list(name = "pMALA(M)", flat = TRUE,
+  list(name = "pMALA(M)",
        file_fn = function(r)
          file.path(results_dir,
            sprintf("logGaussianCoxGirolami_Marg_repeat%d_Marg_pMALA.mat", r))),
-  list(name = "mGrad",    flat = FALSE, struct_name = "summaryMarg",
+  list(name = "mGrad",
        file_fn = function(r)
          file.path(results_dir,
            sprintf("logGaussianCoxGirolami_Marg_repeat%d.mat", r))),
-  list(name = "Ellipt",   flat = FALSE, struct_name = "summaryEllipt",
+  list(name = "Ellipt",
        file_fn = function(r)
          file.path(results_dir,
            sprintf("logGaussianCoxGirolami_Ellipt_repeat%d.mat", r))),
-  list(name = "pCNL",     flat = FALSE, struct_name = "summarypCNL",
+  list(name = "pCNL",
        file_fn = function(r)
          file.path(results_dir,
            sprintf("logGaussianCoxGirolami_pCNL_repeat%d.mat", r))),
-  list(name = "pCN",      flat = FALSE, struct_name = "summarypCN",
+  list(name = "pCN",
        file_fn = function(r)
          file.path(results_dir,
            sprintf("logGaussianCoxGirolami_pCN_repeat%d.mat", r)))
@@ -109,17 +88,17 @@ method_colours <- c(
   "pMALA(M)"  = "#984EA3"
 )
 
-# ---- read LogL from a .mat file --------------------------------------
+# ---- read LogL -----------------------------------------------------------
+# Re() strips imaginary numerical artefacts from Cox process results.
 read_logL <- function(m, rep) {
   path <- m$file_fn(rep)
   if (!file.exists(path)) { warning("File not found: ", path); return(NULL) }
-  mat <- readMat(path)
-  if (m$flat) {
-    return(as.vector(Re(mat[["LogL"]])))   # Re() strips numerical imaginary artefacts
+  L <- tryCatch(as.numeric(readMat(path)[["LogL"]]),
+                error = function(e) { warning(basename(path), ": ", e$message); NULL })
+  if (is.null(L) || length(L) == 0) {
+    warning("LogL not found in ", basename(path)); return(NULL)
   }
-  v <- find_field(mat[[m$struct_name]], "LogL")
-  if (!is.null(v)) return(as.vector(Re(v)))
-  NULL
+  as.numeric(Re(L))
 }
 
 # ---- trace-plot data frame (rep = 1) ---------------------------------
@@ -146,7 +125,7 @@ box_list <- lapply(methods, function(m) {
 box_df <- do.call(rbind, box_list)
 box_df$method <- factor(box_df$method, levels = facet_order)
 
-# ---- Panel 1: faceted trace plots (2 rows × 3 cols) -----------------
+# ---- Panel 1: faceted trace plots (2 rows x 3 cols) -----------------
 p1 <- ggplot(trace_df, aes(x = iter, y = logL, colour = method)) +
   geom_line(linewidth = 0.35) +
   facet_wrap(~ method, nrow = 2, ncol = 3, scales = "free_y") +

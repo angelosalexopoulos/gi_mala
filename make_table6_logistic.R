@@ -1,5 +1,6 @@
 rm(list = ls())
 library(MASS)
+library(parallel)
 
 # ============================================================
 # make_table6_logistic.R
@@ -36,13 +37,20 @@ library(MASS)
 # ============================================================
 
 data_dir <- "/Users/angelos/Desktop/vr_pCN/data"   # <-- edit if needed
-out_file <- "Table6.tex"
+out_dir  <- "/Users/angelos/Library/CloudStorage/OneDrive-aueb.gr/gi-mala-new"
+out_file <- file.path(out_dir, "Table6.tex")
+# Safety net: if out_file was set to a directory, append the filename.
+if (dir.exists(out_file)) out_file <- file.path(out_file, "Table6.tex")
 
-set.seed(121088)
+set.seed(1234)
 
 Burnin  <- 5000
 Repeats <- 100
 T_list  <- c(1000, 10000, 50000, 200000)
+
+# Number of parallel workers for the 100 repeats (fork-based on macOS/Linux;
+# forced to 1 on Windows, where mclapply cannot fork). Edit as needed.
+n_cores <- if (.Platform$OS.type == "windows") 1L else max(1L, detectCores() - 1L)
 
 datasets <- list(
   list(name = "Heart",      sep = ","),
@@ -62,17 +70,17 @@ ergMean <- function(x) cumsum(x) / seq_along(x)
 run_VR_chain <- function(myX, Y, its, Burnin, seed_offset = 0) {
   # Returns list(means = numeric(d), means_cv = numeric(d))
   # for the GI-MALA estimator with two control variates.
-  set.seed(121088 + seed_offset)
+  set.seed(1234 + seed_offset)
   d  <- ncol(myX)
   tY <- 2 * Y - 1
-
+  
   log_target <- function(z) {
     Xz      <- myX %*% z
     log_lik <- sum(log_sigmoid(tY * Xz))
     grad    <- t(Y - sigmoid(Xz)) %*% myX
     list(log_lik = log_lik, grad = grad)
   }
-
+  
   fit       <- suppressWarnings(glm(Y ~ myX - 1, family = binomial("logit")))
   Sprop     <- vcov(fit)
   R         <- t(chol(Sprop))
@@ -80,43 +88,52 @@ run_VR_chain <- function(myX, Y, its, Burnin, seed_offset = 0) {
   gamma_tune <- 1
   target_acc <- 0.774
   acceptance_rates <- numeric(Burnin)
-
+  
   x_store     <- matrix(NA, its, d)
   yx_store    <- matrix(NA, its, d)   # y - x at each accepted/rejected step
   alpha_store <- numeric(its)
   gradS_store <- matrix(NA, its, d)  # A_x * grad at each step
   ii          <- 0
-
+  
   lp <- log_target(xcurrent)
-
+  
   for (i in seq_len(its + Burnin)) {
     lp       <- log_target(xcurrent)
     fx       <- lp$log_lik
     grad_x   <- lp$grad
     A_grad_x <- R %*% (t(R) %*% t(grad_x))
-
+    
     noise <- rnorm(d)
     y     <- xcurrent + gamma_tune * A_grad_x +
-             sqrt(2 * gamma_tune - gamma_tune^2) * (R %*% noise)
-
+      sqrt(2 * gamma_tune - gamma_tune^2) * (R %*% noise)
+    
     v    <- y - xcurrent - 0.5 * gamma_tune * A_grad_x
     h_yx <- (1 / (2 - gamma_tune)) * sum(v * t(grad_x))
-
+    
     lp_y     <- log_target(y)
     fy       <- lp_y$log_lik
     grad_y   <- lp_y$grad
     A_grad_y <- R %*% (t(R) %*% t(grad_y))
-
+    
     v    <- xcurrent - y - 0.5 * gamma_tune * A_grad_y
     h_xy <- (1 / (2 - gamma_tune)) * sum(v * t(grad_y))
-
+    
     log_a  <- (fy - fx) + (h_xy - h_yx)
     a_prob <- min(exp(log_a), 1)
     accept <- (runif(1) < a_prob)
-
+    
+    if (i > Burnin){
+      ii <- ii + 1
+      x_store[ii, ]     <- xcurrent
+      yx_store[ii, ]    <- y - xcurrent          # y - x_current (after accept/reject)
+      alpha_store[ii]   <- a_prob
+      # A_x * grad = Sprop %*% grad (using fixed preconditioning Sprop)
+      gradS_store[ii, ] <- as.vector(Sprop %*% t(grad_x))
+    }
+    
     xcurrent  <- if (accept) y else xcurrent
-    grad_curr <- if (accept) grad_y else grad_x
-
+    grad_x <- if (accept) grad_y else grad_x
+    
     if (i <= Burnin) {
       acceptance_rates[i] <- a_prob
       if (i %% 200 == 0 && i > 200) {
@@ -128,16 +145,11 @@ run_VR_chain <- function(myX, Y, its, Burnin, seed_offset = 0) {
             gamma_tune <- gamma_tune * (1 + 0.1 * (avg_acc - target_acc) / target_acc)
         }
       }
-    } else {
-      ii <- ii + 1
-      x_store[ii, ]     <- xcurrent
-      yx_store[ii, ]    <- y - xcurrent          # y - x_current (after accept/reject)
-      alpha_store[ii]   <- a_prob
-      # A_x * grad = Sprop %*% grad (using fixed preconditioning Sprop)
-      gradS_store[ii, ] <- as.vector(Sprop %*% t(grad_curr))
-    }
+    } #else {
+    
+    #}
   }
-
+  
   # ------------------------------------------------------------------
   # Compute VR-corrected mean for each dimension using two CVs
   # H1 = alpha * (y - x) / gamma
@@ -148,17 +160,17 @@ run_VR_chain <- function(myX, Y, its, Burnin, seed_offset = 0) {
   tol_rcond <- 1e-12
   means    <- numeric(d)
   means_cv <- numeric(d)
-
+  
   for (dd in seq_len(d)) {
     g1 <- alpha_store * (yx_store[, dd] / gamma_tune)
     g2 <- yx_store[, dd] / gamma_tune - gradS_store[, dd]
-
+    
     K11 <- ergMean(g1^2)
     K12 <- ergMean(g1 * g2)
     K22 <- ergMean(g2^2)
     th1 <- ergMean(x_store[, dd] * g1) - ergMean(x_store[, dd]) * ergMean(g1)
     th2 <- ergMean(x_store[, dd] * g2) - ergMean(x_store[, dd]) * ergMean(g2)
-
+    
     theta <- c(NA_real_, NA_real_)
     for (i in 20:its) {
       Kmat <- matrix(c(K11[i], K12[i], K12[i], K22[i]), 2, 2)
@@ -170,13 +182,13 @@ run_VR_chain <- function(myX, Y, its, Burnin, seed_offset = 0) {
         solve(Kmat + lambda * diag(2)) %*% c(th1[i], th2[i]),
         error = function(e) theta)
     }
-
+    
     means[dd]    <- mean(x_store[, dd])
     means_cv[dd] <- mean(x_store[, dd]) -
-                    (if (!is.na(theta[1])) theta[1] * mean(g1) else 0) -
-                    (if (!is.na(theta[2])) theta[2] * mean(g2) else 0)
+      (if (!is.na(theta[1])) theta[1] * mean(g1) else 0) -
+      (if (!is.na(theta[2])) theta[2] * mean(g2) else 0)
   }
-
+  
   list(means = means, means_cv = means_cv)
 }
 
@@ -189,7 +201,7 @@ ratio_max <- matrix(NA, length(datasets), length(T_list))
 for (di in seq_along(datasets)) {
   ds <- datasets[[di]]
   cat("Dataset:", ds$name, "\n")
-
+  
   sep_char <- if (ds$sep == "") "\t" else ds$sep
   raw_X <- read.table(
     file.path(data_dir, paste0("Logistic_", ds$name), "myX.txt"),
@@ -199,32 +211,41 @@ for (di in seq_along(datasets)) {
     file.path(data_dir, paste0("Logistic_", ds$name), "Y.txt"),
     sep = sep_char, header = FALSE)
   Y <- as.numeric(unlist(raw_Y))
-
+  
   d <- ncol(myX)
   myX <- myX[, c(d, seq_len(d - 1))]
-
+  
   for (ti in seq_along(T_list)) {
     T <- T_list[ti]
     cat("  T =", T, "\n")
-
+    
     means_mat    <- matrix(NA, Repeats, d)
     means_cv_mat <- matrix(NA, Repeats, d)
-
+    
+    # Run the 100 repeats in parallel. Each repeat seeds itself deterministically
+    # inside run_VR_chain (set.seed(1234 + seed_offset)), so results are
+    # identical to the serial version regardless of execution order.
+    res_list <- mclapply(seq_len(Repeats), function(rep) {
+      run_VR_chain(myX, Y, its = T, Burnin = Burnin,
+                   seed_offset = rep + (di - 1) * 10000 + (ti - 1) * 1000)
+    }, mc.cores = n_cores)
+    
+    # Guard against worker failures (mclapply returns a try-error for a crashed task)
     for (rep in seq_len(Repeats)) {
-      res <- run_VR_chain(myX, Y, its = T, Burnin = Burnin,
-                         seed_offset = rep + (di - 1) * 10000 + (ti - 1) * 1000)
-      means_mat[rep, ]    <- res$means
-      means_cv_mat[rep, ] <- res$means_cv
+      if (inherits(res_list[[rep]], "try-error") || is.null(res_list[[rep]]))
+        stop(sprintf("repeat %d failed: %s", rep, conditionMessage(attr(res_list[[rep]], "condition"))))
+      means_mat[rep, ]    <- res_list[[rep]]$means
+      means_cv_mat[rep, ] <- res_list[[rep]]$means_cv
     }
-
+    
     var_plain <- apply(means_mat,    2, var)
     var_vr    <- apply(means_cv_mat, 2, var)
     ratio     <- var_plain / pmax(var_vr, 1e-12)
-
+    
     ratio_min[di, ti] <- min(ratio)
     ratio_max[di, ti] <- max(ratio)
     cat("    ratio range: [", round(ratio_min[di, ti], 2), ",",
-                              round(ratio_max[di, ti], 2), "]\n")
+        round(ratio_max[di, ti], 2), "]\n")
   }
 }
 
@@ -239,7 +260,8 @@ writeLines("\\begin{tabular}{lrrrr}", fid)
 writeLines("\\toprule", fid)
 header <- paste(
   "Dataset",
-  paste(sprintf("$n = %s$", formatC(T_list, format = "d", big.mark = ",")),
+  paste(sprintf("$n = %s$",
+                gsub(",", "{,}", formatC(T_list, format = "d", big.mark = ","))),
         collapse = " & "),
   sep = " & ")
 writeLines(paste0(header, " \\\\"), fid)

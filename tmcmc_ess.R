@@ -8,8 +8,6 @@ script_dir <- tryCatch(
   error = function(e) getwd()
 )
 
-#set.seed(121088)
-
 # ============================================================
 # Multi-target GI-MALA tuning experiment for univariate Student t_nu target
 #

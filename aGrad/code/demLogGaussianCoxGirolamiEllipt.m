@@ -55,7 +55,7 @@ model.GP.logtheta = [log((32)*b) log(s)];
 %model.GP.logtheta = [0 0];
 model.constraints.kernHyper = 'fixed';
 model.constraints.likHyper = 'fixed';
-model.FF = X(:); 
+model.FF = X(:);
 
 model.K = kernCompute(model.GP, model.X);
 [model.U, model.Lambda, tmp] = svd(model.K);
@@ -77,15 +77,16 @@ samples.LogL = real(samples.LogL);
 summaryEllipt{ds} = summaryStatistics(samples);
 summaryEllipt{ds}.elapsed = elapsedTime;
 summaryEllipt{ds}.eff_LogL = mcmc_ess(samples.LogL(mcmcoptions.Burnin+1:end));
+LogL = samples.LogL(mcmcoptions.Burnin+1:end);
 
 %end
 
 if storeRes == 1
     % don't store samples and model for more than one repeats
     if rep == 1
-       save(['results/Cox_regression/' dataName '_repeat' num2str(rep) '.mat'], 'summaryEllipt', 'model', 'samples');
+       save(['results/Cox_regression/' dataName '_repeat' num2str(rep) '.mat'], 'summaryEllipt', 'LogL', 'model', 'samples');
     else
-       save(['results/Cox_regression/' dataName '_repeat' num2str(rep) '.mat'], 'summaryEllipt');
+       save(['results/Cox_regression/' dataName '_repeat' num2str(rep) '.mat'], 'summaryEllipt', 'LogL');
     end
 end
 

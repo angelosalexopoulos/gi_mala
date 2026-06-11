@@ -1,6 +1,6 @@
-outdir = '../diagrams/';
+outdir = '../../diagrams/';
 fontsz = 26;
-addpath ../results/; 
+addpath ../../results/Cox_regression/; 
 
  
 datasetName = 'GaussianCox';
@@ -60,12 +60,30 @@ TrainTimepCN(rep) = summarypCN{i}.elapsed;
 deltapCN(rep) = summarypCN{i}.delta;
 
 load(['logGaussianCoxGirolami_pCNL_repeat' num2str(rep) '.mat']);
-ESSminpCNL(rep) = min(summarypCNL{i}.eff_F); 
-ESSmedianpCNL(rep) = median(summarypCNL{i}.eff_F); 
-ESSmaxpCNL(rep) = max(summarypCNL{i}.eff_F); 
-ESSlogLpCNL(rep) = summarypCNL{i}.eff_LogL; 
+ESSminpCNL(rep) = min(summarypCNL{i}.eff_F);
+ESSmedianpCNL(rep) = median(summarypCNL{i}.eff_F);
+ESSmaxpCNL(rep) = max(summarypCNL{i}.eff_F);
+ESSlogLpCNL(rep) = summarypCNL{i}.eff_LogL;
 TrainTimepCNL(rep) = summarypCNL{i}.elapsed;
 deltapCNL(rep) = summarypCNL{i}.delta;
+
+load(['logGaussianCoxGirolami_Marg_repeat' num2str(rep) '_gimala.mat']);
+ESSminGimala(rep) = min(ess);
+ESSmedianGimala(rep) = median(ess);
+ESSmaxGimala(rep) = max(ess);
+ESSlogLGimala(rep) = eff_LogL;
+TrainTimeGimala(rep) = elapsedTime;
+deltaGimala(rep) = delta;
+LogLGimala = LogL;
+
+load(['logGaussianCoxGirolami_Marg_repeat' num2str(rep) '_Marg_pMALA.mat']);
+ESSminGpMALA(rep) = min(ess);
+ESSmedianGpMALA(rep) = median(ess);
+ESSmaxGpMALA(rep) = max(ess);
+ESSlogLGpMALA(rep) = eff_LogL;
+TrainTimeGpMALA(rep) = elapsedTime;
+deltaGpMALA(rep) = delta;
+LogLGpMALA = LogL;
 
 % load logGaussianCoxGirolami_mMALA_RHMC.mat;
 % ESSminRHMC = min(summaryRHMC{i}.eff_F); 
@@ -165,8 +183,8 @@ print('-depsc2', '-r300', name);
 cmd = sprintf('epstopdf %s', [name '.eps']);
 system(cmd);
 
-figure; 
-plot(summaryMALA{i}.LogL,'k'); 
+figure;
+plot(summaryMALA{i}.LogL,'k');
 %xlabel('Sampling iteration','fontsize',fontsz);
 ylabel('Log-likelihood','fontsize',fontsz);
 set(gca,'fontsize',fontsz);
@@ -178,8 +196,35 @@ print('-depsc2', '-r300', name);
 cmd = sprintf('epstopdf %s', [name '.eps']);
 system(cmd);
 
+if i == 1
+figure;
+plot(LogLGimala,'k');
+xlabel('Sampling iteration','fontsize',fontsz);
+ylabel('Log-likelihood','fontsize',fontsz);
+set(gca,'fontsize',fontsz);
+axis([1 7000 2150 2250]);
+title('GI-MALA');
+set(gca, 'XTick', [2000 4000 6000]);
+name = [outdir datasetName '_gimala_logL'];
+print('-depsc2', '-r300', name);
+cmd = sprintf('epstopdf %s', [name '.eps']);
+system(cmd);
 
-% figure; 
+figure;
+plot(LogLGpMALA,'k');
+xlabel('Sampling iteration','fontsize',fontsz);
+ylabel('Log-likelihood','fontsize',fontsz);
+set(gca,'fontsize',fontsz);
+axis([1 7000 2150 2250]);
+title('pMALA (M)');
+set(gca, 'XTick', [2000 4000 6000]);
+name = [outdir datasetName '_pmala_marg_logL'];
+print('-depsc2', '-r300', name);
+cmd = sprintf('epstopdf %s', [name '.eps']);
+system(cmd);
+end
+
+% figure;
 % plot(summarymMALA{i}.LogL,'k'); 
 % xlabel('Sampling iteration','fontsize',fontsz);
 % %ylabel('Log likelihood','fontsize',fontsz);
@@ -237,8 +282,11 @@ fprintf(fid,'pCN  &  %1.1f  &  %1.3f  &  (%1.1f, %1.1f, %1.1f)  &  %1.2f (%1.2f)
 %            std(TrainTimepCN), std(deltapCN), std(ESSminpCN), std(ESSmedianpCN), std(ESSmaxpCN), std(ESSminpCN./TrainTimepCN));     
 fprintf(fid,'pCNL  &  %1.1f  &  %1.3f  &  (%1.1f, %1.1f, %1.1f)  &  %1.2f (%1.2f)\\\\ \n', ...
             mean(TrainTimepCNL),  mean(deltapCNL), mean(ESSminpCNL), mean(ESSmedianpCNL), mean(ESSmaxpCNL), mean(ESSminpCNL./TrainTimepCNL), std(ESSminpCNL./TrainTimepCNL));
-%fprintf(fid,'  &  %1.1f  &  %1.3f  &  (%1.1f, %1.1f, %1.1f)  &  %1.2f \\\\ \n', ...
-%            std(TrainTimepCNL),  std(deltapCNL), std(ESSminpCNL), std(ESSmedianpCNL), std(ESSmaxpCNL), std(ESSminpCNL./TrainTimepCNL));
+fprintf(fid,'\\midrule\n');
+fprintf(fid,'GI-MALA  &  %1.1f  &  %1.3f  &  (%1.1f, %1.1f, %1.1f)  &  %1.2f (%1.2f)\\\\ \n', ...
+            mean(TrainTimeGimala),  mean(deltaGimala), mean(ESSminGimala), mean(ESSmedianGimala), mean(ESSmaxGimala), mean(ESSminGimala./TrainTimeGimala), std(ESSminGimala./TrainTimeGimala));
+fprintf(fid,'pMALA (M)  &  %1.1f  &  %1.3f  &  (%1.1f, %1.1f, %1.1f)  &  %1.2f (%1.2f)\\\\ \n', ...
+            mean(TrainTimeGpMALA),  mean(deltaGpMALA), mean(ESSminGpMALA), mean(ESSmedianGpMALA), mean(ESSmaxGpMALA), mean(ESSminGpMALA./TrainTimeGpMALA), std(ESSminGpMALA./TrainTimeGpMALA));
 fclose(fid);  
 
 

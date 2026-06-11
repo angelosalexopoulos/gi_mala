@@ -1,99 +1,63 @@
-function [model, samples, accRates] = gpsampAuxMarg_fixedhypers_gimala(model, mcmcoptions)
-% gpsampAuxMarg_fixedhypers_gimala  --  GI-MALA sampler (fixed kernel hyperparameters)
+function [model samples accRates] = gpsampAuxMarg_fixedhypers_angelos(model, mcmcoptions)
+%function [model samples accRates] = gpsampAuxMarg_fixedhypers(model, mcmcoptions)
 %
-% Implements the Gaussian-Invariant MALA (GI-MALA) algorithm from Section 3
-% of the paper, operating on the marginalised (whitened) GP latent space.
-% The step-size delta is adapted during burn-in via a stochastic approximation
-% scheme targeting the acceptance rate specified in mcmcoptions.opt.
+% The pCN MALA for latent Gaussian models as described in overleaf notes
+% pCN_Poisson
 %
-% INPUTS
-%   model         struct with fields:
-%     .y            (n x 1) observations
-%     .X            (n x D) input locations
-%     .F            (1 x n) initial latent GP values
-%     .K            (n x n) prior covariance matrix (precomputed)
-%     .U, .Lambda   eigendecomposition of K: K = U * diag(Lambda) * U'
-%     .delta        initial step size (scalar); will be adapted during burn-in
-%     .GP           kernel hyperparameter struct (fixed, not updated)
-%     .Likelihood   likelihood struct with field .type (e.g. 'Sigmoid', 'LogGaussianCox')
-%     .constraints  struct; .kernHyper and .likHyper should be 'fixed'
-%   mcmcoptions   struct with fields:
-%     .T            number of post-burn-in iterations to store
-%     .Burnin       number of burn-in iterations
-%     .StoreEvery   store every k-th sample (thinning; set to 1 for no thinning)
-%     .Langevin     flag (1 = use gradient; retained for interface compatibility)
-%     .opt          target acceptance rate for step-size adaptation (e.g. 0.75)
+% Inputs:
+%         -- model: the structure that contains the log likelihood and the latent
+%                    Gaussian prior parameters such as the covariance matrix
+%                    with its pre-computed eigendecomposition (see demos)
+%         -- mcmcoptions: user defined options about the burn-in and sampling iterations
+%                      and others (see demos)
 %
-% OUTPUTS
-%   model         updated model struct (.F and .delta reflect final MCMC state)
-%   samples       struct with fields:
-%     .F            (T x n) stored latent samples (post burn-in)
-%     .LogL         (T x 1) log-likelihood at each stored sample
-%     .accprob      (T x 1) Metropolis acceptance probability at each step
-%     .deltax       (T x 1) diagonal preconditioner value at each stored step
-%   accRates      struct with field .F: mean acceptance rate (post burn-in)
+% Outputs: model:
+%         -- model: as above. The outputed model is updated to contain the
+%                   state vector of the final MCMC iteration
+%                   as well as the learned step size delta
+%         -- samples: the structure that contrains the samples
+%         -- accRates: acceptance rate
 %
-% PAPER CONNECTION
-%   The proposal distribution is defined in eq. (X) of the paper.
-%   The MH correction factor (corrFactor) corresponds to eq. (X).
-%   Step-size adaptation follows the scheme in Section X.X.
+% 
 
 
-
-% ---- Initialise dimensions and storage arrays ----
 BurnInIters = mcmcoptions.Burnin;
 Iters = mcmcoptions.T;
 StoreEvery = mcmcoptions.StoreEvery;
 [n D] = size(model.X);
 num_stored = floor(Iters/StoreEvery);
-samples.F = zeros(num_stored, n);
-samples.G = zeros(num_stored, n);
-samples.PGhat = zeros(num_stored, n);
-samples.LogL = zeros(num_stored,1);
-samples.deltax = zeros(num_stored,1);
-samples.deltax2 = zeros(num_stored,1);
-samples.ff = zeros(1, num_stored);
-samples.Fy = zeros(num_stored,n);
+samples.F    = zeros(num_stored, n);
+samples.LogL = zeros(num_stored, 1);
 Y = model.y;
 F = model.F;
 
-
-%samples.LogL = zeros(1, BurnInIters + Iters);
-samples.accprob = zeros(num_stored,1);
-samples.ff = zeros(1, BurnInIters + Iters);
-
-% ---- Evaluate initial log-likelihood and gradient ----
+% compute the initial values of the likelihood p(Y | F)
 loglikHandle = str2func(['logL' model.Likelihood.type]);
 oldLogLik = loglikHandle(model.Likelihood, Y, F);
 oldLogLik = sum(oldLogLik(:));
 
-LambdaInv = 1./model.Lambda;
+model.delta = 2/sqrt(n); %understand this as the gamma parameter appearing in overleaf notes
+%model.delta = 1.0;
 
-% Gradient and diagonal curvature of the log-likelihood at current F.
-% der2F is the diagonal of the Hessian; delta_x = mean(-d^2 log p / dF^2)
-% serves as a scalar preconditioner (see Section 3 of the paper).
 gradloglikHandle = str2func(['grad', 'logL' model.Likelihood.type]);
-[derF, der2F] = gradloglikHandle(model.Likelihood, model.y, F);
+[derF der2F] = gradloglikHandle(model.Likelihood, model.y, F);
 
-% ---- Precompute GI-MALA proposal parameters ----
-% delta_x: scalar preconditioner from mean negative curvature
-delta_x     = mean(-(der2F));
+%derF  = derF(:);
+%der2F = der2F(:);
+
+delta_x = -mean(der2F);
+
+
+
 delta_x_inv = 1/delta_x;
-
-% Spectral quantities for the GI-MALA proposal mean and covariance
 delta_xLambdaH = 1./(model.Lambda + delta_x_inv);
 gx = (F + delta_x_inv*derF')*model.U;
 
-% Mean shift for the proposal (scaled eigenbasis representation)
-partOfMeanSampA  = gx'.*delta_xLambdaH.*model.Lambda*model.delta;
-% Standard deviation for proposal noise (eigenspace)
-partOfMeanSampB  = sqrt( (2*model.delta-model.delta*model.delta)/delta_x )*sqrt(model.Lambda.*delta_xLambdaH);
-% Control-variate term (used in VR variant)
-partOfMeanSampCV = partOfMeanSampA'*model.U'/model.delta;
+partOfMeanSampA = gx'.*delta_xLambdaH.*model.Lambda*model.delta;
+partOfMeanSampB = sqrt( (2*model.delta-model.delta*model.delta)/delta_x )*sqrt(model.Lambda.*delta_xLambdaH);%
 
-% Log-determinant and quadratic form entering the MH log-ratio
-partOfMeanMH = -0.5*sum(log(model.Lambda*delta_x+1.0));
-partOfMeanMH = partOfMeanMH-0.5*(model.delta/(2-model.delta))*(gx*(delta_xLambdaH.*gx'));
+partOfMeanMH1 = -0.5*sum(log(model.Lambda*delta_x+1.0));
+partOfMeanMH2 = partOfMeanMH1-0.5*(model.delta/(2-model.delta))*(gx*(delta_xLambdaH.*gx'));
 
 
 cnt = 0;
@@ -107,23 +71,24 @@ epsilon = 0.05;
 
 acceptHistF = zeros(1, BurnInIters + Iters);
 
-% ---- Main MCMC loop (burn-in + sampling) ----
 for it = 1:(BurnInIters + Iters)
+    %
+    % Propose new state vector F
+    Fnew =(1-model.delta)*F + (randn(1, n).*partOfMeanSampB' +  partOfMeanSampA' )*model.U';
 
-    % --- Propose new state vector F (GI-MALA proposal, eq. X) ---
-    Fnew = (1-model.delta)*F + (randn(1, n).*partOfMeanSampB' + partOfMeanSampA')*model.U';
-
-    % Evaluate likelihood at the proposed state
+    % perform an evaluation of the likelihood p(Y | F)
     newLogLik = loglikHandle(model.Likelihood, Y, Fnew(:));
     newLogLik = sum(newLogLik(:));
 
-    % --- Compute MH acceptance ratio ---
-    % Gradient and curvature at the proposed state (needed for reverse proposal)
-    [derFnew, der2Fnew] = gradloglikHandle(model.Likelihood, model.y, Fnew);
-    %der2Fnew = grad2loglikHandle(model.Likelihood, model.y, Fnew);
+    % Metropolis-Hastings to accept-reject the proposal
 
-    delta_y = mean(-(der2Fnew));
-    
+    [derFnew der2Fnew] = gradloglikHandle(model.Likelihood, model.y, Fnew);
+    %derFnew  = derFnew(:);
+    %der2Fnew = der2Fnew(:);
+
+
+    delta_y = -mean(der2Fnew);
+
     
     delta_y_inv = 1/delta_y;
     delta_yLambdaH = 1./(model.Lambda + delta_y_inv);
@@ -132,48 +97,49 @@ for it = 1:(BurnInIters + Iters)
     partOfMeanSampAnew = (gy'.*delta_yLambdaH_Lambda)*model.delta;
     partOfMeanSampBnew = sqrt( (2*model.delta-model.delta*model.delta)/delta_y )*sqrt(delta_yLambdaH_Lambda);
 
-    partOfMeanSampCVnew = partOfMeanSampAnew'*model.U'/model.delta;
+    partOfMeanMHnew1 = -0.5*sum(log(model.Lambda*delta_y+1.0));
+    partOfMeanMHnew2 = partOfMeanMHnew1-0.5*(model.delta/(2-model.delta))*(gy*(delta_yLambdaH.*gy'));
 
 
-    partOfMeanMHnew = -0.5*sum(log(model.Lambda*delta_y+1.0));
-    partOfMeanMHnew = partOfMeanMHnew-0.5*(model.delta/(2-model.delta))*(gy*(delta_yLambdaH.*gy'));
-
-
-    % Log proposal density q(Fnew | F) and q(F | Fnew) (quadratic terms)
     hxy = 0.5*(delta_x/(2*model.delta-model.delta^2))*sum( (Fnew-F -(model.delta/delta_x)*derF').^2 );
-    hxy = hxy + partOfMeanMH;
+    hxy = hxy +partOfMeanMH2;
     hyx = 0.5*(delta_y/(2*model.delta-model.delta^2))*sum( (F-Fnew -(model.delta/delta_y)*derFnew').^2 );
-    hyx = hyx + partOfMeanMHnew;
-    % corrFactor = log q(F|Fnew) - log q(Fnew|F); added to log-likelihood ratio in MH step
+    hyx = hyx +partOfMeanMHnew2;
     corrFactor = hxy - hyx;
 
-    [accept, uprob] = metropolisHastings(newLogLik + corrFactor, oldLogLik, 0, 0);
+    [accept, uprob] = metropolisHastings(newLogLik+corrFactor, oldLogLik, 0, 0);
 
     acceptHistF(it) = accept;
 
     if accept == 1
+        %accept
         F = Fnew;
         derF = derFnew;
         der2F = der2Fnew;
+        gx = gy;
         partOfMeanSampA = partOfMeanSampAnew;
         partOfMeanSampB = partOfMeanSampBnew;
-        partOfMeanMH = partOfMeanMHnew;
+        partOfMeanMH2 = partOfMeanMHnew2;
+        partOfMeanMH1 = partOfMeanMHnew1;
         oldLogLik = newLogLik;
         delta_x = delta_y;
-        partOfMeanSampCV = partOfMeanSampCVnew;
+        delta_x_inv = delta_y_inv;
+        delta_xLambdaH=delta_yLambdaH;
     end
 
     %if model.Likelihood.type ~= 'Gaussian'
-    % --- Step-size adaptation (burn-in only) ---
-    % Every 5 iterations, check the acceptance rate over the last 50 steps.
-    % If it falls outside [opt-range, opt+range], rescale delta proportionally.
-    % Adaptation is frozen after burn-in to ensure valid MCMC ergodicity.
-    if mod(it, 5) == 0
+    % Adapt proposal during burnin
+    if mod(it,5) == 0
         if (it >= 50)
             accRateF = mean(acceptHistF((it-49):it))*100;
             if (it <= BurnInIters)
                 if (accRateF > (100*(opt+range))) || (accRateF < (100*(opt-range)))
                     model.delta = model.delta + (epsilon*((accRateF/100 - opt)/opt))*model.delta;
+                    model.delta = min(max(model.delta, 1e-6), 1.99);
+                    partOfMeanSampA = gx'.*delta_xLambdaH.*model.Lambda*model.delta;
+                    partOfMeanSampB = sqrt( (2*model.delta-model.delta*model.delta)/delta_x )*sqrt(model.Lambda.*delta_xLambdaH);%
+                    %partOfMeanMH = -0.5*sum(log(model.Lambda*delta_x+1.0));
+                    partOfMeanMH2 = partOfMeanMH1-0.5*(model.delta/(2-model.delta))*(gx*(delta_xLambdaH.*gx'));
                 end
             end
         end
@@ -183,25 +149,12 @@ for it = 1:(BurnInIters + Iters)
     if (it > BurnInIters)  & (mod(it,StoreEvery) == 0)
         %
         cnt = cnt + 1;
-        samples.F(cnt,:) = F;
-        samples.G(cnt,:) = F/model.delta;
-        samples.Fy(cnt,:) = Fnew;
-        samples.accprob(cnt,1) = uprob;
+        samples.F(cnt,:)    = F;
         samples.LogL(cnt,1) = oldLogLik;
-        samples.deltax(cnt,1) = -mean(der2F);
-        samples.deltax2(cnt,1) = max(-der2F);
-       
-        samples.PGhat(cnt,:) = partOfMeanSampCV;
+   
 
         %
     end
-
-    %samples.LogL(it) = oldLogLik;
-    samples.ff(it) = 0.5*(F*F');
-    %
-    %if mod(it,1000) == 0
-    %it
-    %end
 end
 %
 %

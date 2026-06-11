@@ -1,6 +1,7 @@
-outdir = '../diagrams/';
+outdir = '../../diagrams/';
 fontsz = 26;
-addpath ../results/; 
+addpath ../../results/;
+addpath ../../results/LogisticRegression_GP/; 
 
 Repeats = 10;
 
@@ -84,14 +85,32 @@ deltapCN(rep) = summarypCN.delta;
 
 fname = [datasetName{1} '_repeat' num2str(rep) '_pCNL_fixedhypers.mat'];
 load(fname);
-ESSminpCNL(rep) = min(summarypCNL.eff_F); 
-ESSmedianpCNL(rep) = median(summarypCNL.eff_F); 
-ESSmaxpCNL(rep) = max(summarypCNL.eff_F); 
-ESSlogLpCNL(rep) = summarypCNL.eff_LogL; 
+ESSminpCNL(rep) = min(summarypCNL.eff_F);
+ESSmedianpCNL(rep) = median(summarypCNL.eff_F);
+ESSmaxpCNL(rep) = max(summarypCNL.eff_F);
+ESSlogLpCNL(rep) = summarypCNL.eff_LogL;
 TrainTimepCNL(rep) = summarypCNL.elapsed;
 deltapCNL(rep) = summarypCNL.delta;
 
+fname = [datasetName{1} '_repeat' num2str(rep) '_Marg_fixedhypers_gimala.mat'];
+load(fname);
+ESSminGimala(rep) = min(ess);
+ESSmedianGimala(rep) = median(ess);
+ESSmaxGimala(rep) = max(ess);
+ESSlogLGimala(rep) = eff_LogL;
+TrainTimeGimala(rep) = elapsedTime;
+deltaGimala(rep) = delta;
+LogLGimala = LogL;
 
+fname = [datasetName{1} '_repeat' num2str(rep) '_Marg_fixedhypers_pMALA.mat'];
+load(fname);
+ESSminGpMALA(rep) = min(ess);
+ESSmedianGpMALA(rep) = median(ess);
+ESSmaxGpMALA(rep) = max(ess);
+ESSlogLGpMALA(rep) = eff_LogL;
+TrainTimeGpMALA(rep) = elapsedTime;
+deltaGpMALA(rep) = delta;
+LogLGpMALA = LogL;
 
 if rep == 1
     
@@ -167,8 +186,8 @@ print('-depsc2', '-r300', [outdir datasetName{1} '_pCNL_logL_fixedhypers']);
 cmd = sprintf('epstopdf %s', [outdir datasetName{1} '_pCNL_logL_fixedhypers.eps']);
 system(cmd);
 
-figure; 
-plot(summaryMALA.LogL,'k'); 
+figure;
+plot(summaryMALA.LogL,'k');
 xlabel('Sampling iteration','fontsize',fontsz);
 ylabel('Log-likelihood','fontsize',fontsz);
 axis(ax);
@@ -177,6 +196,30 @@ title('pMALA');
 set(gca, 'XTick', [3000 6000 9000]);
 print('-depsc2', '-r300', [outdir datasetName{1} '_mala_logL_fixedhypers']);
 cmd = sprintf('epstopdf %s', [outdir datasetName{1} '_mala_logL_fixedhypers.eps']);
+system(cmd);
+
+figure;
+plot(LogLGimala,'k');
+xlabel('Sampling iteration','fontsize',fontsz);
+ylabel('Log-likelihood','fontsize',fontsz);
+axis(ax);
+set(gca,'fontsize',fontsz);
+title('GI-MALA');
+set(gca, 'XTick', [3000 6000 9000]);
+print('-depsc2', '-r300', [outdir datasetName{1} '_gimala_logL_fixedhypers']);
+cmd = sprintf('epstopdf %s', [outdir datasetName{1} '_gimala_logL_fixedhypers.eps']);
+system(cmd);
+
+figure;
+plot(LogLGpMALA,'k');
+xlabel('Sampling iteration','fontsize',fontsz);
+ylabel('Log-likelihood','fontsize',fontsz);
+axis(ax);
+set(gca,'fontsize',fontsz);
+title('pMALA (M)');
+set(gca, 'XTick', [3000 6000 9000]);
+print('-depsc2', '-r300', [outdir datasetName{1} '_pmala_marg_logL_fixedhypers']);
+cmd = sprintf('epstopdf %s', [outdir datasetName{1} '_pmala_marg_logL_fixedhypers.eps']);
 system(cmd);
 
 end
@@ -217,8 +260,11 @@ fprintf(fid,'pCN  &  %1.1f  &  %1.3f  &  (%1.1f, %1.1f, %1.1f)  &  %1.2f (%1.2f)
 %            std(TrainTimepCN), std(deltapCN), std(ESSminpCN), std(ESSmedianpCN), std(ESSmaxpCN), std(ESSminpCN./TrainTimepCN));     
 fprintf(fid,'pCNL  &  %1.1f  &  %1.3f  &  (%1.1f, %1.1f, %1.1f)  &  %1.2f (%1.2f)\\\\ \n', ...
             mean(TrainTimepCNL),  mean(deltapCNL), mean(ESSminpCNL), mean(ESSmedianpCNL), mean(ESSmaxpCNL), mean(ESSminpCNL./TrainTimepCNL), std(ESSminpCNL./TrainTimepCNL));
-%fprintf(fid,'  &  %1.1f  &  %1.3f  &  (%1.1f, %1.1f, %1.1f)  &  %1.2f \\\\ \n', ...
-%            std(TrainTimepCNL),  std(deltapCNL), std(ESSminpCNL), std(ESSmedianpCNL), std(ESSmaxpCNL), std(ESSminpCNL./TrainTimepCNL));
+fprintf(fid,'\\midrule\n');
+fprintf(fid,'GI-MALA  &  %1.1f  &  %1.3f  &  (%1.1f, %1.1f, %1.1f)  &  %1.2f (%1.2f)\\\\ \n', ...
+            mean(TrainTimeGimala),  mean(deltaGimala), mean(ESSminGimala), mean(ESSmedianGimala), mean(ESSmaxGimala), mean(ESSminGimala./TrainTimeGimala), std(ESSminGimala./TrainTimeGimala));
+fprintf(fid,'pMALA (M)  &  %1.1f  &  %1.3f  &  (%1.1f, %1.1f, %1.1f)  &  %1.2f (%1.2f)\\\\ \n', ...
+            mean(TrainTimeGpMALA),  mean(deltaGpMALA), mean(ESSminGpMALA), mean(ESSmedianGpMALA), mean(ESSmaxGpMALA), mean(ESSminGpMALA./TrainTimeGpMALA), std(ESSminGpMALA./TrainTimeGpMALA));
 fclose(fid);  
 
 

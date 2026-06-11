@@ -60,18 +60,18 @@ if ~exist('diagrams', 'dir'),                     mkdir('diagrams'); end
 fprintf('\n=== EXPERIMENT 1: Binary Classification ===\n');
 fprintf('Running methods (mGrad, pMALA, Ellipt, pCN, pCNL, GI-MALA)...\n');
 
-randn('seed', 1210);
-rand('seed', 1210);
+randn('seed', 1234);
+rand('seed', 1234);
 Repeats = 10;
-%for r = 1:Repeats
-parfor (r=1:Repeats,4)
+for r = 1:Repeats
+%parfor (r=1:Repeats,10)
     fprintf('  Repeat %d / %d\n', r, Repeats);
     demBinaryClassification_Marg_fixedhypers_pMALA(r);      % pMALA      → results/LogisticRegression_GP/
+    demBinaryClassification_Marg_fixedhypers_gimala(r);     % GI-MALA → results/LogisticRegression_GP/
     demBinaryClassification_Marg_fixedhypers(r);            % mGrad      → results/LogisticRegression_GP/
     demBinaryClassification_Ellipt_fixedhypers(r);          % Ellipt     → results/LogisticRegression_GP/
     demBinaryClassification_pCN_fixedhypers(r);             % pCN        → results/LogisticRegression_GP/
     demBinaryClassification_pCNL_fixedhypers(r);            % pCNL       → results/LogisticRegression_GP/
-    demBinaryClassification_Marg_fixedhypers_gimala(r);     % GI-MALA → results/LogisticRegression_GP/
 end
 fprintf('Experiment 1 complete.\n');
 
@@ -87,18 +87,24 @@ fprintf('Experiment 1 complete.\n');
 fprintf('\n=== EXPERIMENT 2: Log-Gaussian Cox Process ===\n');
 fprintf('Running methods (mGrad, pMALA, Ellipt, pCN, pCNL, RHMC, GI-MALA)...\n');
 
-randn('seed', 1210);
-rand('seed', 1210);
-%for r = 1:Repeats
-parfor (r=1:Repeats,10)    
-    fprintf('  Repeat %d / %d\n', r, Repeats);
+randn('seed', 1234);
+rand('seed', 1234);
+for r = 1:Repeats
+%parfor (r=1:Repeats,10)    
+    fprintf('mGrad  Repeat %d / %d\n', r, Repeats);
     demLogGaussianCoxGirolamiMarg(r);            % mGrad      → results/Cox_regression/
+    fprintf('pMALA  Repeat %d / %d\n', r, Repeats);
     demLogGaussianCoxGirolamiMarg_pMALA(r);      % pMALA      → results/Cox_regression/
-    demLogGaussianCoxGirolamiEllipt(r);          % Ellipt     → results/Cox_regression/
-    demLogGaussianCoxGirolamipCN(r);             % pCN        → results/Cox_regression/
-    demLogGaussianCoxGirolamipCNL(r);            % pCNL       → results/Cox_regression/
-    demLogGaussianCoxGirolamiRHMC(r);            % RHMC       → results/Cox_regression/
+    fprintf('gi-mala  Repeat %d / %d\n', r, Repeats);
     demLogGaussianCoxGirolamiMarg_gimala(r);     % GI-MALA → results/Cox_regression/
+    fprintf('Ellipt Repeat %d / %d\n', r, Repeats);
+    demLogGaussianCoxGirolamiEllipt(r);          % Ellipt     → results/Cox_regression/
+    fprintf('pCN  Repeat %d / %d\n', r, Repeats);
+    demLogGaussianCoxGirolamipCN(r);             % pCN        → results/Cox_regression/
+    fprintf('pCNL  Repeat %d / %d\n', r, Repeats);
+    demLogGaussianCoxGirolamipCNL(r);            % pCNL       → results/Cox_regression/
+    fprintf('RHMC  Repeat %d / %d\n', r, Repeats);
+    demLogGaussianCoxGirolamiRHMC(r);            % RHMC       → results/Cox_regression/
 end
 fprintf('Experiment 2 complete.\n');
 
@@ -114,10 +120,10 @@ fprintf('Experiment 2 complete.\n');
 fprintf('\n=== EXPERIMENT 3: GP Regression with Informative Likelihood ===\n');
 fprintf('Running methods (mGrad, pMALA, Ellipt, pCN, pCNL, GI-MALA)...\n');
 
-randn('seed', 1210);
-rand('seed', 1210);
+randn('seed', 1234);
+rand('seed', 1234);
 %for r = 1:Repeats
-parfor (r=1:Repeats,4)    
+parfor (r=1:Repeats,10)    
     fprintf('  Repeat %d / %d\n', r, Repeats);
     demRegressInformLikelMarg_fixedhypers_pMALA(r);      % pMALA   → results/GPregression/
     demRegressInformLikelMarg_fixedhypers(r);            % mGrad   → results/GPregression/
@@ -128,25 +134,10 @@ parfor (r=1:Repeats,4)
 end
 fprintf('Experiment 3 complete.\n');
 
-% -------------------------------------------------------------------------
-% DONE — remind the user to generate figures and tables next (Step 2)
-% -------------------------------------------------------------------------
-fprintf('\n=== All core MCMC experiments complete ===\n');
-fprintf('\n--- Step 2: generate figures and LaTeX tables (run from repo root) ---\n');
-fprintf('In MATLAB:\n');
-fprintf('  make_results_binaryclassification   %% Tables 3,4,9,10,11; Figures 4,5\n');
-fprintf('  make_results_cox                    %% Table 5; Figure 6\n');
-fprintf('  make_results_regression             %% Table 15\n');
-fprintf('\n--- Variance-reduction experiments (Tables 7, 8, 12) ---\n');
-fprintf('Run first (100 reps x multiple T values, ~days):\n');
-fprintf('  run_VR_experiments\n');
-fprintf('Then:\n');
-fprintf('  make_results_VR_binaryclassification   %% Tables 7, 12\n');
-fprintf('  make_results_VR_girolami               %% Table 8\n');
-fprintf('\n--- R-based experiments ---\n');
-fprintf('In R (from repo root):\n');
-fprintf('  source("make_table2_logistic.R")  %% Table 2 (Section 5.1.1)\n');
-fprintf('  source("make_table6_logistic.R")  %% Table 6 (Section 5.2)\n');
-fprintf('  source("tmcmc.R")                 %% Figure 1 / Table 13 (Section 5.2.1 / Appendix A.2)\n');
-fprintf('  source("tmcmc_ess.R")             %% Table 14 / Figure 3 (Appendix A.2)\n');
-fprintf('\nAll output written to: diagrams/\n');
+
+make_results_binaryclassification   %% Tables 3,4,9,10,11; Figures 4,5
+make_results_cox                    %% Table 5; Figure 6
+make_results_regression             %% Table 15
+run_VR_experiments
+make_results_VR_binaryclassification   %% Tables 7, 12
+make_results_VR_girolami               %% Table 8

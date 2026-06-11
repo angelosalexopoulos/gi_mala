@@ -1,0 +1,253 @@
+% ============================================================================
+% all_tables.tex
+%
+% Assembles every results table of the paper into one standalone document,
+% using the table files that are already produced by the pipeline.
+%
+% Sources (all pulled in with \input so the numbers reflect the latest run):
+%   * MATLAB ESS comparison tables (3,4,5,9,10,11,15):
+%       diagrams/Table3.txt, Table4.txt, Table5_N64.txt, Table5_N32.txt,
+%       diagrams/Table9.txt, Table10.txt, Table11.txt, Table15.txt
+%     (columns: Method | Time(s) | Acc. (%) | step size delta | ESS | Min ESS/s)
+%   * MATLAB variance-reduction tables (7,8,12):
+%       diagrams/Table7.txt, Table8.txt, Table12.txt
+%   * R-based tables (2,6,13,14):
+%       table2_logistic.tex, Table6.tex, Table13.tex, Table14.tex   (repo root)
+%
+% Compile AFTER running the experiments and the R scripts:
+%   run_all_experiments        % MATLAB, from repo root
+%   source("make_table2_logistic.R"); source("make_table6_logistic.R")
+%   source("tmcmc.R");          source("tmcmc_ess.R")          % R, from repo root
+%   pdflatex all_tables.tex
+% ============================================================================
+\documentclass[11pt]{article}
+
+\usepackage[margin=1.8cm]{geometry}
+\usepackage{booktabs}   % \toprule \midrule \bottomrule
+\usepackage{array}      % custom column types
+\usepackage{amsmath,amssymb}
+\usepackage{float}      % [H] float specifier used by Table14.tex
+\usepackage{caption}
+
+% Hidden column: consumes the cell content but prints nothing (zero width).
+% Used to drop the "Acc. (%)" and "step size delta" columns (3rd and 4th) from
+% the 6-column ESS tables in diagrams/Table*.txt without regenerating them.
+\newcolumntype{H}{>{\setbox0=\hbox\bgroup}c<{\egroup}@{}}
+
+\begin{document}
+
+\begin{center}
+  {\Large\bfseries Updated result tables}
+\end{center}
+
+\bigskip
+
+\noindent\fbox{\parbox{\textwidth}{%
+\textbf{Note on the reported numbers.}
+The values in the tables below differ from those in the corresponding tables of
+\texttt{main\_paper.pdf}. This is because the present results were generated with
+a \emph{different random seed}: in the first submission of the paper the random
+seed was accidentally not stored, so the exact numerical values reported there
+cannot be reproduced. The seed is now fixed at the top of
+\texttt{run\_all\_experiments.m}, so all numbers in this document are fully
+reproducible. The qualitative conclusions of the paper are unchanged.
+}}
+
+\bigskip
+
+% ============================================================================
+% Table 2 — ESS, Bayesian logistic regression (R)
+% ============================================================================
+\begin{table}[htbp]
+  \centering
+  \caption{ESS scores in Bayesian logistic regression with $d$-dimensional
+           posterior distributions. All numbers are averages across ten random
+           repeats. (Table 2, Section 5.1.1.)}
+  \input{table2_logistic.tex}
+\end{table}
+
+% ============================================================================
+% Table 3 — Heart (binary classification, MATLAB)
+% ============================================================================
+\begin{table}[htbp]
+  \centering
+  \caption{Comparison of sampling methods in the Heart dataset ($d=270$).
+           Averages across ten random repeats. (Table 3, Section 5.1.2.)}
+  \begin{tabular}{lr@{}HHrr}
+    \toprule
+    \input{diagrams/Table3.txt}\crcr
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+% ============================================================================
+% Table 4 — Australian (binary classification, MATLAB)
+% ============================================================================
+\begin{table}[htbp]
+  \centering
+  \caption{Comparison of sampling methods in the Australian Credit dataset
+           ($d=690$). Averages across ten random repeats. (Table 4, Section 5.1.2.)}
+  \begin{tabular}{lr@{}HHrr}
+    \toprule
+    \input{diagrams/Table4.txt}\crcr
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+% ============================================================================
+% Table 5 — Log-Gaussian Cox process (MATLAB)
+% ============================================================================
+\begin{table}[htbp]
+  \centering
+  \caption{Comparison of sampling methods in the log-Gaussian Cox model
+           ($d=4096$), $N=64$. Averages across ten random repeats. (Table 5, Section 5.1.3.)}
+  \begin{tabular}{lr@{}HHrr}
+    \toprule
+    \input{diagrams/Table5_N64.txt}\crcr
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\begin{table}[htbp]
+  \centering
+  \caption{Comparison of sampling methods in the log-Gaussian Cox model, $N=32$
+           (supplementary). Averages across ten random repeats.}
+  \begin{tabular}{lr@{}HHrr}
+    \toprule
+    \input{diagrams/Table5_N32.txt}\crcr
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+% ============================================================================
+% Table 6 — VR factors, Bayesian logistic regression (R)
+% ============================================================================
+\begin{table}[htbp]
+  \centering
+  \caption{Range of estimated factors (variance ratios) by which the variance of
+           $\mu_n(F)$ is larger than the variance of $\mu_{n,G}(F)$ for the
+           Bayesian logistic regression targets. (Table 6, Section 5.2.)}
+  \input{Table6.tex}
+\end{table}
+
+% ============================================================================
+% Table 7 — VR factors, GP binary classification, Heart/Australian (MATLAB)
+% ============================================================================
+\begin{table}[htbp]
+  \centering
+  \caption{Estimated factors for the Gaussian process binary classification
+           targets. (Table 7, Section 5.2.)}
+  \begin{tabular}{lrrrr}
+    \toprule
+    \input{diagrams/Table7.txt}\crcr
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+% ============================================================================
+% Table 8 — VR factors, GP log-Cox model (MATLAB)
+% ============================================================================
+\begin{table}[htbp]
+  \centering
+  \caption{Estimated factors for the Gaussian process log-Cox model with
+           $d=4096$. (Table 8, Section 5.2.)}
+  \begin{tabular}{lrr}
+    \toprule
+    Dataset & $n = 1{,}000$ & $n = 10{,}000$ \\
+    \midrule
+    \input{diagrams/Table8.txt}\crcr
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+% ============================================================================
+% Table 9 — German (binary classification, MATLAB)
+% ============================================================================
+\begin{table}[htbp]
+  \centering
+  \caption{Comparison of sampling methods in the German dataset ($d=1000$).
+           Averages across ten random repeats. (Table 9, Appendix A.1.)}
+  \begin{tabular}{lr@{}HHrr}
+    \toprule
+    \input{diagrams/Table9.txt}\crcr
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+% ============================================================================
+% Table 10 — Pima (binary classification, MATLAB)
+% ============================================================================
+\begin{table}[htbp]
+  \centering
+  \caption{Comparison of sampling methods in the Pima dataset ($d=532$).
+           Averages across ten random repeats. (Table 10, Appendix A.1.)}
+  \begin{tabular}{lr@{}HHrr}
+    \toprule
+    \input{diagrams/Table10.txt}\crcr
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+% ============================================================================
+% Table 11 — Ripley (binary classification, MATLAB)
+% ============================================================================
+\begin{table}[htbp]
+  \centering
+  \caption{Comparison of sampling methods in the Ripley dataset ($d=250$).
+           Averages across ten random repeats. (Table 11, Appendix A.1.)}
+  \begin{tabular}{lr@{}HHrr}
+    \toprule
+    \input{diagrams/Table11.txt}\crcr
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+% ============================================================================
+% Table 12 — VR factors, GP binary classification, German/Pima/Ripley (MATLAB)
+% ============================================================================
+\begin{table}[htbp]
+  \centering
+  \caption{Range of estimated variance reduction factors for Gaussian process
+           binary classification targets. (Table 12, Appendix A.1.)}
+  \begin{tabular}{lrrrr}
+    \toprule
+    \input{diagrams/Table12.txt}\crcr
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+% ============================================================================
+% Table 13 — VR factors, Student-t tail probability (R)  [two sub-tables N=2, N=5]
+% ============================================================================
+\begin{table}[htbp]
+  \centering
+  \caption{Estimated factors (variance ratios) by which the variance of
+           $\mu_n(F)$ is larger than the variance of $\mu_{n,G}(F)$ when the
+           target is a univariate Student's $t$-distribution with $\nu$ degrees
+           of freedom and $F(x)=\mathbb{I}(x>b)$, for different $\nu$, $b$ and
+           truncation level $N$ ($N=2$ top, $N=5$ bottom). (Table 13, Appendix A.2.)}
+  \input{Table13.tex}
+\end{table}
+
+% ============================================================================
+% Table 14 — ESS / acceptance / step size, Student-t (R)
+% This file already provides its own \begin{table}...\end{table} float.
+% ============================================================================
+\input{Table14.tex}
+
+% ============================================================================
+% Table 15 — GP regression with informative likelihood (MATLAB)
+% ============================================================================
+\begin{table}[htbp]
+  \centering
+  \caption{Comparison of sampling methods in the regression dataset with
+           $\sigma^2 = 0.01$ and $d=1000$. Averages across ten repeats.
+           (Table 15, Appendix A.4.)}
+  \begin{tabular}{lr@{}HHrr}
+    \toprule
+    \input{diagrams/Table15.txt}\crcr
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\end{document}

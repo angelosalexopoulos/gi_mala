@@ -115,16 +115,11 @@ for dataName = {'Australian' 'German' 'Heart' 'Pima' 'Ripley'}% 'Caravan'}
    [model.U, model.Lambda, tmp] = svd(model.K);
    model.Lambda = diag(model.Lambda);
 
-   % Repeat until post-burnin acceptance rate is within [49, 59]% (target 54%)
-   cond = true;
-   while cond
+
        tic;
        [model samples accRates] = gpsampAuxMarg_fixedhypers(model, mcmcoptions);
        elapsedTime = toc;
-       if accRates.F > 49 && accRates.F < 59
-           cond = false;
-       end
-   end
+
 
    % compute statistics 
    summaryMarg = summaryStatistics(samples);

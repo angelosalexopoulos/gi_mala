@@ -1,7 +1,7 @@
 function demBinaryClassification_Marg_fixedhypers_gimala_VR(rep, T)
 % Optional second argument T sets mcmcoptions.T (number of post-burnin samples).
 % Defaults to 1000 when called without T.
-if nargin < 2, T = 1000; end
+if nargin < 2, T = 5000; end
 
 
 
@@ -127,11 +127,9 @@ means_cv = zeros(1, n);
    [model.U, model.Lambda, tmp] = svd(model.K);
    model.Lambda = diag(model.Lambda);
 
-
-
-   tic;
-   [model, samples, accRates] = gpsampAuxMarg_fixedhypers_gimala(model, mcmcoptions);
-   elapsedTime = toc;
+       tic;
+       [model, samples, accRates] = gpsampAuxMarg_fixedhypers_gimala_VR(model, mcmcoptions);
+       elapsedTime = toc;
 
 
  myd = size(samples.F,2);
@@ -171,7 +169,7 @@ end
 end
 
    aprob = accRates;
-   save(['results/LogisticRegression_GP/' dataName '_repeat' num2str(rep) '_Marg_fixedhypers_VR_' num2str(mcmcoptions.T) '.mat'], ...
+   save(['results/LogisticRegression_GP/' dataName{1} '_repeat' num2str(rep) '_Marg_fixedhypers_VR_' num2str(mcmcoptions.T) '.mat'], ...
        'aprob','means','means_cv');
 end
 

@@ -60,7 +60,7 @@ model.GP.logtheta = [log((32)*b) log(s)];
 model.constraints.kernHyper = 'fixed';
 model.constraints.likHyper = 'fixed';
 model.FF = X(:);
-model.delta = 0.1/sqrt(size(X,1));
+model.delta = 6;
 
 mcmcoptions.T = 5000;
 mcmcoptions.Burnin = 5000;
@@ -77,16 +77,10 @@ model.Lambda = diag(model.Lambda);
 
 
 
-   % Repeat until post-burnin acceptance rate is within [52, 62]% (target 57.4%)
-   cond = true;
-   while cond
+
        tic;
        [model samples accRates] = gpsampAuxMarg_fixedhypers_pMALA(model, mcmcoptions);
        elapsedTime = toc;
-       if accRates.F > 52 && accRates.F < 62
-           cond = false;
-       end
-   end
 
 
  % compute statistics

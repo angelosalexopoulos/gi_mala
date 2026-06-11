@@ -55,7 +55,7 @@ model.GP.logtheta = [log((32)*b) log(s)];
 %model.GP.logtheta = [0 0];
 model.constraints.kernHyper = 'fixed';
 model.constraints.likHyper = 'fixed';
-model.FF = X(:); 
+model.FF = X(:);
 
 
 mcmcoptions.T = 5000;
@@ -69,15 +69,18 @@ model.K = kernCompute(model.GP, model.X);
 model.Lambda = diag(model.Lambda);
 
 % Repeat until post-burnin acceptance rate is within [49, 59]% (target 54%)
+%model.delta = 0.0005;
+
 cond = true;
-while cond
+%while cond
     tic;
     [model samples accRates] = gpsampAuxMarg_fixedhypers(model, mcmcoptions);
     elapsedTime = toc;
-    if accRates.F > 49 && accRates.F < 59
-        cond = false;
-    end
-end
+    fprintf('Repeat %d [mGrad]: acceptance rate = %.1f%%\n', rep, accRates.F);
+  %  if accRates.F > 50 && accRates.F < 65
+  %      cond = false;
+  %  end
+%end
 samples.F = real(samples.F);
 samples.LogL = real(samples.LogL);
 % compute statistics 
@@ -86,14 +89,15 @@ summaryMarg{ds}.elapsed = elapsedTime;
 summaryMarg{ds}.accRates = accRates;
 summaryMarg{ds}.delta = model.delta; 
 summaryMarg{ds}.eff_LogL = mcmc_ess(samples.LogL(mcmcoptions.Burnin+1:end));
+LogL = samples.LogL(mcmcoptions.Burnin+1:end);
 
 %end
 
 if storeRes == 1
     % don't store samples and model for more than one repeats
     if rep == 1
-        save(['results/Cox_regression/' dataName '_repeat' num2str(rep) '.mat'], 'summaryMarg', 'model', 'samples');
+        save(['results/Cox_regression/' dataName '_repeat' num2str(rep) '.mat'], 'summaryMarg', 'LogL', 'model', 'samples');
     else
-        save(['results/Cox_regression/' dataName '_repeat' num2str(rep) '.mat'], 'summaryMarg');
+        save(['results/Cox_regression/' dataName '_repeat' num2str(rep) '.mat'], 'summaryMarg', 'LogL');
     end
 end

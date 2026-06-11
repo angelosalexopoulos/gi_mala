@@ -26,8 +26,8 @@
 %   make_results_VR_binaryclassification    % Tables 7, 12
 %   make_results_VR_girolami                % Table 8
 
-randn('seed', 42);
-rand('seed',  42);
+randn('seed', 1234);
+rand('seed',  1234);
 
 addpath aGrad/code;
 addpath aGrad/code/toolbox;
@@ -42,7 +42,7 @@ if ~exist('results/Cox_regression', 'dir')
 end
 
 Repeats        = 100;
-T_list_binary  = [1000, 10000, 50000, 200000];
+T_list_binary  = [200000]%[1000, 10000, 50000, 200000];%
 T_list_cox     = [1000, 10000];
 
 % -------------------------------------------------------------------------
@@ -54,6 +54,7 @@ fprintf('Running %d repeats x %d T values x 5 datasets\n', Repeats, length(T_lis
 for T = T_list_binary
     fprintf('\n  T = %d\n', T);
     parfor (r = 1:Repeats, 10)
+    %for r = 1:Repeats    
         demBinaryClassification_Marg_fixedhypers_gimala_VR(r, T);
     end
 end
@@ -66,13 +67,11 @@ fprintf('Running %d repeats x %d T values\n', Repeats, length(T_list_cox));
 
 for T = T_list_cox
     fprintf('\n  T = %d\n', T);
-    for r = 1:Repeats
+    %for r = 1:Repeats
+    parfor (r = 1:Repeats, 10)    
         demLogGaussianCoxGirolamiMarg_gimala_VR(r, T);
     end
 end
 
 fprintf('\n=== All VR experiments complete. ===\n');
-fprintf('Generate tables with:\n');
-fprintf('  cd aGrad/code\n');
-fprintf('  make_results_VR_binaryclassification   %% Tables 7, 12\n');
-fprintf('  make_results_VR_girolami               %% Table 8\n');
+

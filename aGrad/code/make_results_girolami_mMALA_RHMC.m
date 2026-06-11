@@ -1,6 +1,6 @@
 clear; 
-outdir = '../diagrams/';
-addpath ../results/; 
+outdir = '../../diagrams/';
+addpath ../../results/Cox_regression/; 
 addpath ../diagrams/; 
 addpath toolbox;
  
