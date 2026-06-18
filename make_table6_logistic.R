@@ -36,8 +36,8 @@ library(parallel)
 #   Logistic_Australian/ subdirectories.
 # ============================================================
 
-data_dir <- "/Users/angelos/Desktop/vr_pCN/data"   # <-- edit if needed
-out_dir  <- "/Users/angelos/Library/CloudStorage/OneDrive-aueb.gr/gi-mala-new"
+data_dir <- "aGrad/data"   # repo-relative; run from the repository root
+out_dir  <- "."   # repo root (run from the repository root)
 out_file <- file.path(out_dir, "Table6.tex")
 # Safety net: if out_file was set to a directory, append the filename.
 if (dir.exists(out_file)) out_file <- file.path(out_file, "Table6.tex")

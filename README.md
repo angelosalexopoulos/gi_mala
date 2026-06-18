@@ -27,7 +27,7 @@ The full pipeline requires two steps: run the MATLAB simulations, then run the R
 run_all_experiments
 ```
 
-This single script runs all three MCMC experiments (binary classification, Cox process, GP regression) over 10 repeats, saves `.mat` results to `results/`, and produces the following tables in `diagrams/`:
+This single script runs all three experiments (binary classification, Cox process, GP regression), saves `.mat` results to `results/`, and produces the following tables in `diagrams/`:
 
 | Tables produced | Description |
 |---|---|
@@ -83,4 +83,3 @@ source("tmcmc_ess.R")               # Table 14 + Figure 3 — ESS on univariate 
 - **Parallel execution**: `run_all_experiments.m` uses `parfor` with up to 10 workers. Replace with `for` if running without the Parallel Computing Toolbox.
 - **Robustness**: all `make_results_*.m` scripts skip any method whose `.mat` files are absent — no errors on partial runs.
 - **Output directory**: `diagrams/` is created automatically if it does not exist.
-

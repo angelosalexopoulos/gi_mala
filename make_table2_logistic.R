@@ -28,7 +28,7 @@ library(coda)
 #   Each subfolder must contain myX.txt and Y.txt.
 # ============================================================
 
-data_dir <- "/Users/angelos/Desktop/vr_pCN/data"   # <-- edit if needed
+data_dir <- "aGrad/data"   # repo-relative; run from the repository root
 out_file <- "table2_logistic.tex"
 
 set.seed(1234)
