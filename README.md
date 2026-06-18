@@ -27,7 +27,7 @@ The full pipeline requires two steps: run the MATLAB simulations, then run the R
 run_all_experiments
 ```
 
-This single script runs all three MCMC experiments (binary classification, Cox process, GP regression) over 10 repeats, saves `.mat` results to `results/`, and produces the following tables in `diagrams/`:
+This single script runs all three experiments (binary classification, Cox process, GP regression), saves `.mat` results to `results/`, and produces the following tables in `diagrams/`:
 
 | Tables produced | Description |
 |---|---|
