@@ -28,8 +28,14 @@ library(coda)
 #   Each subfolder must contain myX.txt and Y.txt.
 # ============================================================
 
-data_dir <- "aGrad/data"   # repo-relative; run from the repository root
-out_file <- "table2_logistic.tex"
+# Resolve paths relative to THIS script's folder, so it works whether you
+# source() it or run it with Rscript, regardless of the working directory.
+script_dir <- tryCatch(
+  dirname(normalizePath(sys.frame(1)$ofile)),   # works when sourced
+  error = function(e) getwd()                    # fallback (e.g. Rscript from repo root)
+)
+data_dir <- file.path(script_dir, "aGrad", "data")
+out_file <- file.path(script_dir, "table2_logistic.tex")
 
 set.seed(1234)
 

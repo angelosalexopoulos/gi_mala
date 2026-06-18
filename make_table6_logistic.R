@@ -36,10 +36,15 @@ library(parallel)
 #   Logistic_Australian/ subdirectories.
 # ============================================================
 
-data_dir <- "aGrad/data"   # repo-relative; run from the repository root
-out_dir  <- "."   # repo root (run from the repository root)
-out_file <- file.path(out_dir, "Table6.tex")
-# Safety net: if out_file was set to a directory, append the filename.
+# Resolve paths relative to THIS script's folder, so it works whether you
+# source() it or run it with Rscript, regardless of the working directory.
+script_dir <- tryCatch(
+  dirname(normalizePath(sys.frame(1)$ofile)),   # works when sourced
+  error = function(e) getwd()                    # fallback (e.g. Rscript from repo root)
+)
+data_dir <- file.path(script_dir, "aGrad", "data")
+out_file <- file.path(script_dir, "Table6.tex")
+# Safety net: if out_file resolves to a directory, append the filename.
 if (dir.exists(out_file)) out_file <- file.path(out_file, "Table6.tex")
 
 set.seed(1234)
